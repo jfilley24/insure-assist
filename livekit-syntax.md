@@ -42,15 +42,15 @@ async def entrypoint(ctx: JobContext):
     await ctx.connect(auto_subscribe=AutoSubscribe.AUDIO_ONLY)
 
     # 1. Bind tools
-    fnc_ctx = llm.ToolContext(tools=[
+    tools = [
         agent_tools.log_fnol_claim,
         # ... any other module imports
-    ])
+    ]
 
     # 2. Start Agent with instructions and tools
     agent = Agent(
         instructions="You are an insurance agent",
-        fnc_ctx=fnc_ctx
+        tools=tools
     )
 
     # 3. Create Voice/LLM Pipeline

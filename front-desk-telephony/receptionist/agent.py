@@ -5,7 +5,6 @@ from dotenv import load_dotenv
 from google.genai import types
 from livekit.agents import AutoSubscribe, JobContext, WorkerOptions, cli, Agent, AgentSession
 from livekit.plugins import google
-from agent_tools import AssistantTools
 
 load_dotenv()
 
@@ -36,10 +35,9 @@ Never break character. You are the ultimate receptionist."""
 
     # Import raw functions from our tools file and bind them
     import agent_tools
-    from livekit.agents import llm
 
-    # LiveKit v0.8+ expects tools to be injected via an `llm.ToolContext` array:
-    fnc_ctx = llm.ToolContext(tools=[
+    # LiveKit v0.8+ expects tools to be passed directly as a list
+    tools = [
         agent_tools.lookup_billing_balance,
         agent_tools.send_secure_payment_link,
         agent_tools.log_fnol_claim,
@@ -47,12 +45,12 @@ Never break character. You are the ultimate receptionist."""
         agent_tools.generate_and_send_coi,
         agent_tools.submit_vehicle_endorsement,
         agent_tools.page_on_call_agent
-    ])
+    ]
 
     # Bind the tools to the Agent wrapper
     agent = Agent(
         instructions=instructions,
-        fnc_ctx=fnc_ctx
+        tools=tools
     )
 
     # Initialize the session with Gemini Flash Native Audio
