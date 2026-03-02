@@ -81,7 +81,7 @@ jobs:
           service: ${{ env.SERVICE_NAME }}
           region: ${{ env.REGION }}
           image: ${{ env.DOCKER_TAG }}
-          service_account: ${{ env.API_SERVICE_ACCOUNT }}
+          flags: '--service-account=${{ env.API_SERVICE_ACCOUNT }} --port=8081'
           env_vars: |-
             LIVEKIT_URL=${{ secrets.LIVEKIT_URL }}
           secrets: |-
