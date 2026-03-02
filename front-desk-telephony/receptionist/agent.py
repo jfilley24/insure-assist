@@ -34,8 +34,20 @@ You have the power to help the client with almost anything they need without tra
 
 Never break character. You are the ultimate receptionist."""
 
-    # Initialize the tool context
-    fnc_ctx = AssistantTools()
+    # Import raw functions from our tools file and bind them
+    import agent_tools
+    from livekit.agents import llm
+
+    # LiveKit v0.8+ expects tools to be injected via an `llm.ToolContext` array:
+    fnc_ctx = llm.ToolContext(tools=[
+        agent_tools.lookup_billing_balance,
+        agent_tools.send_secure_payment_link,
+        agent_tools.log_fnol_claim,
+        agent_tools.retrieve_auto_id_cards,
+        agent_tools.generate_and_send_coi,
+        agent_tools.submit_vehicle_endorsement,
+        agent_tools.page_on_call_agent
+    ])
 
     # Bind the tools to the Agent wrapper
     agent = Agent(
