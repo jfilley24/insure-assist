@@ -72,11 +72,18 @@ Never break character. You are the ultimate receptionist."""
         instructions="Please proactively greet the caller exactly like this: 'Thank you for calling WFA Insurance. This is Sarah, how can I help you today?'"
     )
 
+async def request_fnc(req: JobRequest) -> None:
+    logger.info(f"RECEIVED JOB REQUEST: {req.room.name}")
+    await req.accept()
+
 if __name__ == "__main__":
     cli.run_app(
         WorkerOptions(
             entrypoint_fnc=entrypoint,
+            request_fnc=request_fnc,
             num_idle_processes=0,
             port=int(os.environ.get("PORT", 8081)),
+            # Force threads to avoid silent multiprocessing crashes on Cloud Run
+            job_executor_type=livekit.agents.JobExecutorType.THREAD
         )
     )
