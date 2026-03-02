@@ -3,7 +3,7 @@ name: Deploy Telephony Agent to Cloud Run
 on:
   push:
     branches:
-      - main
+      - production
       - development
     paths:
       - 'front-desk-telephony/**'
@@ -49,7 +49,7 @@ jobs:
       # Determine target environment from branch
       - name: Set Environment Variables
         run: |
-          if [ "${{ github.ref_name }}" = "main" ]; then
+          if [ "${{ github.ref_name }}" = "production" ]; then
             echo "SERVICE_NAME=receptionist-prod" >> $GITHUB_ENV
           else
             echo "SERVICE_NAME=receptionist-dev" >> $GITHUB_ENV
