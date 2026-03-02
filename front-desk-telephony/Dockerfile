@@ -18,7 +18,6 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy the actual agent codebase
 # We only copy the specific receptionist directory and shared tools
 COPY ./receptionist /app/receptionist
-COPY .env /app/.env
 
 # Change directory immediately before executing to preserve pathing relative to `agent.py`
 WORKDIR /app/receptionist
