@@ -1,3 +1,4 @@
+import os
 import asyncio
 import logging
 from dotenv import load_dotenv
@@ -74,7 +75,7 @@ if __name__ == "__main__":
     cli.run_app(
         WorkerOptions(
             entrypoint_fnc=entrypoint,
-            prewarm_process=False,
-            worker_type="room",
+            num_idle_processes=0,
+            port=int(os.environ.get("PORT", 8081)),
         )
     )
