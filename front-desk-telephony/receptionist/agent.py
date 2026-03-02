@@ -73,9 +73,22 @@ Never break character. You are the ultimate receptionist."""
     # Explicitly configure the Worker OS limits so Docker doesn't hang waiting for infinite processes
     import os
     
-    worker_opts = WorkerOptions(
-        entrypoint_fnc=entrypoint,
-        prewarm_process=True
-    )
+if __name__ == "__main__":
+    from aiohttp import web
     
-    cli.run_app(worker_opts)
+    async def create_app():
+        app = web.Application()
+        # Create a simple health check endpoint so GCP knows we are alive
+        app.router.add_get('/', lambda r: web.Response(text='LiveKit Worker Running'))
+        
+        # Configure LiveKit Worker natively into the server loop
+        worker = cli.run_app(
+            WorkerOptions(
+                entrypoint_fnc=entrypoint,
+                worker_type="room",
+            )
+        )
+        return app
+        
+    port = int(os.getenv("PORT", 8081))
+    web.run_app(create_app(), host="0.0.0.0", port=port)
