@@ -75,6 +75,7 @@ Never break character. You are the ultimate receptionist."""
 if __name__ == "__main__":
     cli.run_app(
         WorkerOptions(
+            agent_name="receptionist-agent",
             entrypoint_fnc=entrypoint,
         )
     )
