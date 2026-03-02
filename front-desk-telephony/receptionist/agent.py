@@ -70,5 +70,12 @@ Never break character. You are the ultimate receptionist."""
         instructions="Please proactively greet the caller exactly like this: 'Thank you for calling WFA Insurance. This is Sarah, how can I help you today?'"
     )
 
-if __name__ == "__main__":
-    cli.run_app(WorkerOptions(entrypoint_fnc=entrypoint))
+    # Explicitly configure the Worker OS limits so Docker doesn't hang waiting for infinite processes
+    import os
+    
+    worker_opts = WorkerOptions(
+        entrypoint_fnc=entrypoint,
+        prewarm_process=True
+    )
+    
+    cli.run_app(worker_opts)
