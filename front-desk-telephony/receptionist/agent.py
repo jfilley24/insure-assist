@@ -54,11 +54,12 @@ Never break character. You are the ultimate receptionist."""
         tools=tools
     )
 
-    # Initialize the session with Gemini Flash Native Audio
+    # Initialize the session with Gemini Flash Native Audio via Vertex AI
     session = AgentSession(
         llm=google.realtime.RealtimeModel(
-            model="gemini-2.5-flash-native-audio-preview-12-2025",
+            model="gemini-live-2.5-flash-native-audio",
             voice="aoede",
+            vertexai=True,
             temperature=0.7,
             thinking_config=types.ThinkingConfig(include_thoughts=True)
         )
