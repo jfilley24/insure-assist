@@ -1,7 +1,3 @@
----
-trigger: always_on
----
-
 # 🛡️ Insure-Assist Project Directives (v3.0)
 
 ## 1. Role & Persona
@@ -40,3 +36,6 @@ To maintain architectural integrity while ensuring development velocity, follow 
 - **Verification**: Run the appropriate test suite after modifying logic. All test outputs go to the active `<project-folder>/artifacts/logs/`.
 - **Preservation Rule**: DO NOT refactor or rewrite existing, working code unless explicitly requested. Limit modifications strictly to the lines necessary for the current task. 
 - **Infrastructure Safety**: Any changes to GCP resource configurations MUST be presented as a plan first. Do not use 'Auto-Mode' for infrastructure deletion.
+
+## 6. Question vs. Execution Protocol
+When the exact nature of the user's intent is a question, discussion, or exploratory remark, **DO NOT** shift into execution mode. **DO NOT** write code, edit files, or manipulate `implementation_plan.md` tasks. You must stop, answer the question directly, wait for clarification, and explicitly verify the path forward *before* taking any structural actions.

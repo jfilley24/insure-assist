@@ -57,7 +57,7 @@ Never break character. You are the ultimate receptionist."""
     session = AgentSession(
         llm=google.realtime.RealtimeModel(
             model="gemini-2.5-flash-native-audio-preview-12-2025",
-            voice="Leda",
+            voice="aoede",
             temperature=0.7,
             thinking_config=types.ThinkingConfig(include_thoughts=True)
         )

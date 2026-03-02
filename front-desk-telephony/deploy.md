@@ -46,5 +46,23 @@ To run the agent locally for testing via your laptop microphone (before attachin
    ```
    *Note: Once running, connect to the LiveKit Sandbox URL in your browser to simulate the phone call interface.*
 
-## Deployment via GCP
-*(Cloud Run deployment instructions will be populated here once the Docker containerization strategy is finalized.)*
+## Deployment via Enterprise CI/CD
+We utilize a strict multi-environment strategy governed by GitHub Actions and GCP Cloud Run. No engineer should manually push containers from their laptop.
+
+### 1. The `development` Branch (Safe Sandbox)
+All feature work should branch off of `development`. 
+When you push code back to the `development` branch, GitHub Actions will:
+1. Run the Pytest suite.
+2. Build the Docker container.
+3. Deploy strictly to the **`receptionist-dev`** Cloud Run endpoint.
+
+*This endpoint is safe for client demos and internal Sandbox testing without impacting live hospital/agency phone lines.*
+
+### 2. The `main` Branch (Production)
+The `main` branch represents the live server mapping to actual Twilio SIP trunks. **You cannot push directly to `main`.**
+1. Open a Pull Request from `development` -> `main`.
+2. A required code review is enforced.
+3. Upon merging, GitHub Actions will package the release and deploy it directly to the **`receptionist-prod`** Cloud Run endpoint.
+
+### Creating the Setup (First Time Only)
+To initialize this pipeline securely via Workload Identity Federation (WIF) so that no API keys are stored in GitHub, follow the GCP-Architect setup checklist detailed in `operations.md`.

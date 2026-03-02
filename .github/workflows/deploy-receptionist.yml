@@ -1,0 +1,89 @@
+name: Deploy Telephony Agent to Cloud Run
+
+on:
+  push:
+    branches:
+      - main
+      - development
+    paths:
+      - 'front-desk-telephony/**'
+      - '.github/workflows/deploy-receptionist.yml'
+
+env:
+  PROJECT_ID: insure-assist-dev
+  REGION: us-central1
+  REPO_NAME: telephony-repo
+  IMAGE_NAME: receptionist-agent
+  API_SERVICE_ACCOUNT: telephony-agent@insure-assist-dev.iam.gserviceaccount.com
+
+jobs:
+  test-and-deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write # Required for Workload Identity Federation
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      # Standard Pipeline Test
+      # Note: We run uv independently of the pip compile so we are testing actual source code dependencies
+      - name: Install uv and deps
+        run: |
+          pip install uv
+          cd front-desk-telephony
+          uv sync
+      
+      - name: Run pytest
+        run: |
+          cd front-desk-telephony
+          uv run pytest tests/ -v
+
+      # Determine target environment from branch
+      - name: Set Environment Variables
+        run: |
+          if [ "${{ github.ref_name }}" = "main" ]; then
+            echo "SERVICE_NAME=receptionist-prod" >> $GITHUB_ENV
+          else
+            echo "SERVICE_NAME=receptionist-dev" >> $GITHUB_ENV
+          fi
+
+      # Authenticate to Google Cloud using WIF
+      - name: GCP Auth
+        id: auth
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: github-actions@insure-assist-dev.iam.gserviceaccount.com
+
+      - name: Docker Auth
+        run: |-
+          gcloud auth configure-docker ${{ env.REGION }}-docker.pkg.dev --quiet
+
+      - name: Build and Push Docker Image
+        run: |-
+          cd front-desk-telephony
+          DOCKER_TAG="${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REPO_NAME }}/${{ env.IMAGE_NAME }}:${{ github.sha }}"
+          docker build -t "$DOCKER_TAG" .
+          docker push "$DOCKER_TAG"
+          echo "DOCKER_TAG=$DOCKER_TAG" >> $GITHUB_ENV
+
+      - name: Deploy to Cloud Run
+        uses: google-github-actions/deploy-cloudrun@v2
+        with:
+          service: ${{ env.SERVICE_NAME }}
+          region: ${{ env.REGION }}
+          image: ${{ env.DOCKER_TAG }}
+          service_account: ${{ env.API_SERVICE_ACCOUNT }}
+          env_vars: |-
+            LIVEKIT_URL=${{ secrets.LIVEKIT_URL }}
+          secrets: |-
+            LIVEKIT_API_KEY=LIVEKIT_API_KEY:latest
+            LIVEKIT_API_SECRET=LIVEKIT_API_SECRET:latest
