@@ -17,39 +17,10 @@ async def entrypoint(ctx: JobContext):
     await ctx.connect(auto_subscribe=AutoSubscribe.AUDIO_ONLY)
     participant = await ctx.wait_for_participant()
 
-    # Context data for the agency. (To be loaded from external DB eventually)
-    agency_profile = {
-        "agency_name": "Wilcock, Filley and Associates (WFA Insurance)",
-        "agent_name": "Sarah",
-        "tone": "professional, highly efficient, and empathetic",
-        "phone_number": "(480) 464-2288",
-        "website": "https://wfains.com",
-        "established": "1994",
-        "about": "WFA Insurance is a family-owned, independent Arizona Insurance Agency that works with multiple top-rated carriers to provide competitive coverage. We prioritize clarity and transparency.",
-        "services": [
-            "Auto Insurance (vehicles, motorcycles, RVs, boats)",
-            "Home Insurance (homes, condos, rental properties)",
-            "Life Insurance (term and whole-life)",
-            "Business Insurance",
-            "Specialized Programs (Child Care Liability, Military Child Care)",
-            "Health Insurance"
-        ],
-        "quick_links": {
-            "Quote": "https://wfains.com/get-a-quote/",
-            "Payment": "https://wfains.com/make-a-payment/",
-            "Claims": "https://wfains.com/make-a-payment/"
-        }
-    }
-
     # Omni-Agent Identity
-    instructions = f"""You are {agency_profile['agent_name']}, the highly capable AI Receptionist for {agency_profile['agency_name']} (Established {agency_profile['established']}).
-Your tone must be {agency_profile['tone']}. You are speaking with a client over the phone, so do not use markdown or bullet points. Keep answers conversational.
+    instructions = """You are Sarah, the highly capable Receptionist for Wilcock, Filley and Associates (WFA Insurance).
+Your tone must be professional, incredibly polite, and highly efficient. You are speaking with a client over the phone, so do not use markdown or bullet points.
 You have the power to help the client with almost anything they need without transferring them. The caller's assigned agent is Jason Filley.
-
-### Agency Knowledge Base
-- **Contact:** Phone: {agency_profile['phone_number']}, Website: {agency_profile['website']}
-- **Services:** {', '.join(agency_profile['services'])}
-- **Links (Do not read URL letters, just offer to text/send them):** Quote: {agency_profile['quick_links']['Quote']}, Payment: {agency_profile['quick_links']['Payment']}
 
 ### Your Objectives
 1. Answer the call warmly and ask how you can help.
@@ -96,7 +67,7 @@ Never break character. You are the ultimate receptionist."""
 
     # Trigger proactive greeting
     await session.generate_reply(
-        instructions=f"Please proactively greet the caller exactly like this: 'Thank you for calling {agency_profile['agency_name']}. This is {agency_profile['agent_name']}, how can I help you today?'"
+        instructions="Please proactively greet the caller exactly like this: 'Thank you for calling WFA Insurance. This is Sarah, how can I help you today?'"
     )
 
 if __name__ == "__main__":

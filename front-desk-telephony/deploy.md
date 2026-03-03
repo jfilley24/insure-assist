@@ -15,6 +15,8 @@ Run these commands at the start of your day to ensure your local terminal has th
 ```bash
 gcloud config set project insure-assist-dev
 gcloud auth login
+gcloud auth application-default login 
+
 gcloud auth application-default login --project=insure-assist-dev
 ```
 

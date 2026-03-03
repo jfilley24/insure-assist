@@ -1,0 +1,82 @@
+registered worker
+Default STARTUP TCP probe succeeded after 1 attempt for container "receptionist-agent-1" on port 8081.
+preloading plugins
+starting worker
+shutting down worker
+draining worker
+shutting down worker
+draining worker
+registered worker
+Default STARTUP TCP probe succeeded after 1 attempt for container "receptionist-agent-1" on port 8081.
+preloading plugins
+starting worker
+registered worker
+Default STARTUP TCP probe succeeded after 1 attempt for container "receptionist-agent-1" on port 8081.
+preloading plugins
+starting worker
+shutting down worker
+draining worker
+shutting down worker
+draining worker
+registered worker
+Default STARTUP TCP probe succeeded after 1 attempt for container "receptionist-agent-1" on port 8081.
+preloading plugins
+starting worker
+shutting down worker
+draining worker
+registered worker
+Default STARTUP TCP probe succeeded after 1 attempt for container "receptionist-agent-1" on port 8081.
+preloading plugins
+starting worker
+registered worker
+Default STARTUP TCP probe succeeded after 1 attempt for container "receptionist-agent-1" on port 8081.
+preloading plugins
+starting worker
+shutting down worker
+draining worker
+registered worker
+Default STARTUP TCP probe succeeded after 1 attempt for container "receptionist-agent-1" on port 8081.
+preloading plugins
+starting worker
+Default STARTUP TCP probe failed 1 time consecutively for container "receptionist-agent-1" on port 8081. The instance was not started.
+Connection failed with status CANCELLED.
+Traceback (most recent call last):
+  File "/app/receptionist/agent.py", line 75, in <module>
+    WorkerOptions(
+TypeError: ServerOptions.__init__() got an unexpected keyword argument 'prewarm_process'
+Default STARTUP TCP probe failed 1 time consecutively for container "receptionist-agent-1" on port 8081. The instance was not started.
+Connection failed with status CANCELLED.
+Traceback (most recent call last):
+  File "/app/receptionist/agent.py", line 75, in <module>
+    WorkerOptions(
+TypeError: ServerOptions.__init__() got an unexpected keyword argument 'prewarm_process'
+Default STARTUP TCP probe failed 1 time consecutively for container "receptionist-agent-1" on port 8081. The instance was not started.
+Connection failed with status CANCELLED.
+Traceback (most recent call last):
+  File "/app/receptionist/agent.py", line 75, in <module>
+    WorkerOptions(
+TypeError: ServerOptions.__init__() got an unexpected keyword argument 'prewarm_process'
+Default STARTUP TCP probe failed 1 time consecutively for container "receptionist-agent-1" on port 8081. The instance was not started.
+Connection failed with status CANCELLED.
+Traceback (most recent call last):
+  File "/app/receptionist/agent.py", line 75, in <module>
+    WorkerOptions(
+TypeError: ServerOptions.__init__() got an unexpected keyword argument 'prewarm_process'
+Default STARTUP TCP probe failed 1 time consecutively for container "receptionist-agent-1" on port 8081. The instance was not started.
+Connection failed with status CANCELLED.
+Traceback (most recent call last):
+  File "/app/receptionist/agent.py", line 75, in <module>
+    WorkerOptions(
+TypeError: ServerOptions.__init__() got an unexpected keyword argument 'prewarm_process'
+Default STARTUP TCP probe failed 1 time consecutively for container "receptionist-agent-1" on port 8081. The instance was not started.
+Connection failed with status CANCELLED.
+Traceback (most recent call last):
+  File "/app/receptionist/agent.py", line 75, in <module>
+    WorkerOptions(
+TypeError: ServerOptions.__init__() got an unexpected keyword argument 'prewarm_process'
+Default STARTUP TCP probe failed 1 time consecutively for container "receptionist-agent-1" on port 8081. The instance was not started.
+Connection failed with status CANCELLED.
+Traceback (most recent call last):
+  File "/app/receptionist/agent.py", line 75, in <module>
+    WorkerOptions(
+TypeError: ServerOptions.__init__() got an unexpected keyword argument 'prewarm_process'
