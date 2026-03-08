@@ -1,10 +1,22 @@
 import os
 import asyncio
 import logging
+import signal
+import sys
 from dotenv import load_dotenv
 
 from google.genai import types
-from livekit.agents import AutoSubscribe, JobContext, WorkerOptions, cli, Agent, AgentSession
+from livekit.agents import (
+    AutoSubscribe, 
+    JobContext, 
+    WorkerOptions, 
+    cli, 
+    Agent, 
+    AgentSession,
+    AudioConfig,
+    BackgroundAudioPlayer,
+    BuiltinAudioClip
+)
 from livekit.plugins import google
 
 load_dotenv()
@@ -19,7 +31,7 @@ async def entrypoint(ctx: JobContext):
 
     # Context data for the agency. (To be loaded from external DB eventually)
     agency_profile = {
-        "agency_name": "Wilcock, Filley and Associates (WFA Insurance)",
+        "agency_name": "Wilcock, Filley and Associates",
         "agent_name": "Sarah",
         "tone": "professional, highly efficient, and empathetic",
         "phone_number": "(480) 464-2288",
@@ -86,20 +98,45 @@ Never break character. You are the ultimate receptionist."""
     # Initialize the session with Gemini Flash Native Audio via Vertex AI
     session = AgentSession(
         llm=google.realtime.RealtimeModel(
-            model="gemini-2.5-flash-native-audio-preview-12-2025",
+            model="gemini-live-2.5-flash-native-audio",
             voice="aoede",
-            temperature=0.7
+            temperature=0.7,
+            vertexai=True
         )
     )
 
     await session.start(room=ctx.room, agent=agent)
+
+    # Configure background thinking audio
+    background_audio = BackgroundAudioPlayer(
+        thinking_sound=[
+            AudioConfig(BuiltinAudioClip.KEYBOARD_TYPING, volume=0.8),
+            AudioConfig(BuiltinAudioClip.KEYBOARD_TYPING2, volume=0.7),
+        ],
+    )
+    await background_audio.start(room=ctx.room, agent_session=session)
 
     # Trigger proactive greeting
     await session.generate_reply(
         instructions=f"Please proactively greet the caller exactly like this: 'Thank you for calling {agency_profile['agency_name']}. This is {agency_profile['agent_name']}, how can I help you today?'"
     )
 
+def shutdown_handler(sig, frame):
+    """Gracefully handles SIGINT and SIGTERM to release port 8081 cleanly"""
+    logger.info("Received termination signal. Executing graceful shutdown...")
+    try:
+        loop = asyncio.get_running_loop()
+        for task in asyncio.all_tasks(loop=loop):
+            task.cancel()
+        loop.stop()
+    except RuntimeError:
+        pass # Loop might already be closed
+    sys.exit(0)
+
 if __name__ == "__main__":
+    signal.signal(signal.SIGINT, shutdown_handler)
+    signal.signal(signal.SIGTERM, shutdown_handler)
+
     cli.run_app(
         WorkerOptions(
             agent_name="receptionist-agent",

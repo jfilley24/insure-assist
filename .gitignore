@@ -10,7 +10,7 @@ venv.bak/
 # Byte-compiled
 *.pyc
 __pycache__/
-
+ 
 # Logs
 logs/
 *.log
@@ -22,3 +22,7 @@ logs/
 *.ogg
 *.wav
 *.webm
+
+# Secret Keys
+*firebase-adminsdk*.json
+*-key.json

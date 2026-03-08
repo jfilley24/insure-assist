@@ -1,0 +1,99 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ----------------------------------------------------------------------------------
+// The Broker represents the multi-tenant "Agency" (e.g. Agua Caliente, J. Filley)
+// ----------------------------------------------------------------------------------
+model Broker {
+  id              String   @id @default(uuid())
+  name            String
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  isActive        Boolean  @default(true)
+  
+  // Custom Firebase Domain binding for ingestion (e.g., "wfains.com")
+  ingestionDomain String   @unique 
+
+  // Role Level Security mapped attributes
+  brokerAdminIds  String   // SQLite doesn't support arrays, mapping to comma-separated string
+  
+  clients         Client[]
+  auditLogs       AuditLog[]
+}
+
+// ----------------------------------------------------------------------------------
+// A Client (the insured party) who belongs exclusively to a single Broker.
+// ----------------------------------------------------------------------------------
+model Client {
+  id              String   @id @default(uuid())
+  name            String
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  updatedById     String?  // Firebase UID of the last modifier
+
+  brokerId        String
+  broker          Broker   @relation(fields: [brokerId], references: [id], onDelete: Cascade)
+
+  // Contact matching (for ACORD routing)
+  authorizedDomains String   // SQLite doesn't support arrays, mapping to comma-separated string
+  
+  policies        Policy[]
+}
+
+// ----------------------------------------------------------------------------------
+// Structured ACORD Documents. Linked to GCS, parsed by Gemini once.
+// ----------------------------------------------------------------------------------
+model Policy {
+  id              String   @id @default(uuid())
+  filename        String
+  fileType        String    @default("UNPROCESSED") // AUTO, GL, WC, UMBRELLA, UNPROCESSED, GL, WC, UMBRELLA
+  uploadedAt      DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  updatedById     String?  // Firebase UID of the user who uploaded/overwrote this policy
+  expirationDate  DateTime?
+  gcsUri          String   // The absolute gs:// bucket path for the binary PDF
+  
+  clientId        String
+  client          Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
+  // ----------------------------------------------------------------------------------
+  // AI Dual-Format Extraction Strategy
+  // ----------------------------------------------------------------------------------
+  
+  // 1. Structured JSON for known deterministic keys (e.g. ACORD 25 mappings, specific dates, limits)
+  // This powers fast relational lookups without needing to re-parse text.
+  acord_fields_json String? 
+
+  // 2. Unstructured JSON for generic ad-hoc text representation of the FULL document.
+  // This acts as a cheap, lightning-fast "LLM-native" cache replacement for the binary PDF,
+  // allowing subsequent conversational agents to query the document text dynamically without rerunning OCR/vision.
+  free_form_json   String?
+}
+
+// ----------------------------------------------------------------------------------
+// Dedicated Audit Logging for SOC2 Compliance
+// ----------------------------------------------------------------------------------
+model AuditLog {
+  id            String   @id @default(uuid())
+  createdAt     DateTime @default(now())
+  
+  // The Firebase User who performed the action
+  userId        String?  
+  // Stringified JSON describing the change (e.g. before/after states)
+  action        String   // e.g. "POLICY_UPLOAD", "CLIENT_CREATED", "ACORD_GENERATED"
+  entityType    String   // e.g. "POLICY", "CLIENT", "BROKER"
+  entityId      String   // The UUID of the record being changed
+  
+  // Store the actual mutation details (what fields changed) in a structured/encrypted way
+  details       String? 
+  
+  // Tie the log specifically to the tenant to ensure logs are siloed
+  brokerId      String
+  broker        Broker   @relation(fields: [brokerId], references: [id], onDelete: Cascade)
+}

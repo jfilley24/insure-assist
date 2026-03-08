@@ -1,0 +1,24 @@
+{
+    "agency": "WFA Insurance",
+    "philosophy": {
+        "auto": {
+            "liability": "We strictly recommend 250k/500k/100k bodily injury and property damage limits. Anything lower, especially 100/300, is a major risk for asset exposure.",
+            "uninsured_motorist": "Must match liability limits (e.g. 250k/500k).",
+            "medical_payments": "Optional, but $5,000 is standard if requested.",
+            "comprehensive_deductible": "Recommend $500 or $1000 to keep premiums down.",
+            "collision_deductible": "Recommend $1000. People should have enough liquid savings to cover a $1000 incident.",
+            "glass_windshield": "Skip this. It is cheaper to pay $300 out of pocket for a windshield than to pay massive premium hikes for years because a glass claim touched the CLUE report.",
+            "rental_reimbursement": "Only necessary if the client doesn't have a backup vehicle or the means to rent one for 30 days."
+        },
+        "home": {
+            "dwelling_coverage": "Must be 100% Replacement Cost. Never Actual Cash Value.",
+            "deductible": "Recommend 1% or 2% wind/hail, and $2500 All Other Perils. High deductibles prevent small, nuisance claims that lead to cancellation.",
+            "water_backup": "Crucial. Must have at least $10,000-$25,000 water backup coverage.",
+            "personal_property": "Replacement Cost is mandatory."
+        },
+        "general": {
+            "bundling": "Always highlight if the home and auto are not bundled, as this leaves a 15-20% discount on the table.",
+            "umbrella": "Any client with net worth over $500k or youthful drivers in the household MUST be quoted a $1M or $2M umbrella policy."
+        }
+    }
+}

@@ -1,0 +1,28 @@
+[
+    {
+        "origin": [
+            "http://localhost:3000",
+            "http://localhost:3001"
+        ],
+        "method": [
+            "GET",
+            "PUT",
+            "POST",
+            "DELETE",
+            "OPTIONS"
+        ],
+        "responseHeader": [
+            "Content-Type",
+            "Authorization",
+            "X-Goog-Signature",
+            "X-Goog-Algorithm",
+            "X-Goog-Credential",
+            "X-Goog-Date",
+            "X-Goog-Expires",
+            "X-Goog-SignedHeaders",
+            "x-goog-meta-clientid",
+            "x-goog-meta-brokerid"
+        ],
+        "maxAgeSeconds": 3600
+    }
+]
