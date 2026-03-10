@@ -19,6 +19,9 @@ export function ClientHistoryTab({ clientId, clientEmail, clientName }: ClientHi
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
+    const [currentPage, setCurrentPage] = useState(1);
+    const ITEMS_PER_PAGE = 5;
+
     const fetchHistory = async () => {
         if (!token) return;
         setLoading(true);
@@ -29,6 +32,7 @@ export function ClientHistoryTab({ clientId, clientEmail, clientName }: ClientHi
             if (!res.ok) throw new Error("Failed to load history");
             const data = await res.json();
             setHistory(data.coiRequests || []);
+            setCurrentPage(1); // Reset on load
         } catch (err: any) {
             setError(err.message);
         } finally {
@@ -94,9 +98,12 @@ export function ClientHistoryTab({ clientId, clientEmail, clientName }: ClientHi
         );
     }
 
+    const totalPages = Math.ceil(history.length / ITEMS_PER_PAGE);
+    const paginatedHistory = history.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
+
     return (
         <div className="space-y-4">
-            {history.map((req: any) => {
+            {paginatedHistory.map((req: any) => {
                 const isPassed = req.status === "PASSED";
                 return (
                     <Card key={req.id} className="overflow-hidden shadow-sm">
@@ -174,6 +181,30 @@ export function ClientHistoryTab({ clientId, clientEmail, clientName }: ClientHi
                     </Card>
                 );
             })}
+
+            {totalPages > 1 && (
+                <div className="flex items-center justify-between pt-4 pb-2">
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                        disabled={currentPage === 1}
+                    >
+                        Previous
+                    </Button>
+                    <span className="text-sm text-slate-500 flex font-medium">
+                        Page {currentPage} of {totalPages}
+                    </span>
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                        disabled={currentPage === totalPages}
+                    >
+                        Next
+                    </Button>
+                </div>
+            )}
         </div>
     );
 }
