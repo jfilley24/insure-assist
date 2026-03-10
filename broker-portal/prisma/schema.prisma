@@ -23,6 +23,7 @@ model Broker {
   // Role Level Security mapped attributes
   brokerAdminIds  String   // SQLite doesn't support arrays, mapping to comma-separated string
   
+  users           User[]
   clients         Client[]
   auditLogs       AuditLog[]
 }
@@ -50,6 +51,25 @@ model Client {
   policies        Policy[]
   coiRequests     COIRequest[]
   communicationLogs CommunicationLog[]
+}
+
+// ----------------------------------------------------------------------------------
+// Internal Users (Synced from Firebase Auth)
+// ----------------------------------------------------------------------------------
+model User {
+  id        String   @id // Firebase UID
+  email     String   @unique
+  firstName String
+  lastName  String?
+  role      String   // 'super_admin', 'broker_admin', 'agent', 'assistant', 'csr'
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  brokerId  String?
+  broker    Broker?  @relation(fields: [brokerId], references: [id], onDelete: Cascade)
+  
+  coiRequests COIRequest[]
 }
 
 // ----------------------------------------------------------------------------------
@@ -113,6 +133,9 @@ model COIRequest {
   
   source              String   // e.g. "PORTAL" or "EMAIL"
   requestedBy         String?  // Name or email of who asked for it
+  
+  requestorId         String?  // The Firebase UID / User ID
+  requestor           User?    @relation(fields: [requestorId], references: [id], onDelete: SetNull)
   
   // The raw document uploaded or emailed demanding the cert
   requestDocumentUri  String?  

@@ -27,7 +27,7 @@ export async function POST(
         const { id } = await params;
         const prisma = getSecurePrisma(decodedToken);
 
-        const coiRequest = await prisma.cOIRequest.findUnique({
+        const coiRequest = await (prisma as any).cOIRequest.findUnique({
             where: { id },
             include: { client: true }
         });
@@ -62,10 +62,11 @@ export async function POST(
         console.log(`Mock Dispatching Email to ${to} for COI Request ${id}`);
 
         // Persist the communication log
-        const commLog = await prisma.communicationLog.create({
+        const commLog = await (prisma as any).communicationLog.create({
             data: {
                 coiRequestId: id,
                 clientId: coiRequest.clientId,
+                brokerId: coiRequest.brokerId,
                 type: "EMAIL_OUTBOUND",
                 subject: subject || `Certificate of Insurance - ${coiRequest.client.name}`,
                 body: message || "Please find the requested COI attached.",

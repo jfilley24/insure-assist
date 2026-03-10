@@ -12,7 +12,6 @@ export default function DashboardLayout({
             <div className="min-h-screen bg-slate-50 flex flex-col md:flex-row">
                 <Sidebar />
                 <div className="flex-1 w-full pt-16 md:pt-0 pb-12">
-                    <span className="font-bold text-slate-900 tracking-tight">Insure Assist AI</span>
                     {children}
                 </div>
             </div>

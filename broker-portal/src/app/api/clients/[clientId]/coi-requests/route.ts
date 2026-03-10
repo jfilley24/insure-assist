@@ -35,8 +35,14 @@ export async function POST(
             return NextResponse.json({ error: "Client not found or access denied" }, { status: 404 });
         }
 
+        // Fetch the user to get real first/last names
+        const dbUser = await (prisma as any).user.findUnique({
+            where: { id: decodedToken.uid }
+        });
+        const requestorName = dbUser ? `${dbUser.firstName} ${dbUser.lastName || ''}`.trim() : (decodedToken.name || "Unknown Agent");
+
         const body = await request.json();
-        const { gcsUri, source = "PORTAL", requestedBy = "" } = body;
+        const { gcsUri, source = "PORTAL" } = body;
 
         if (!gcsUri) {
             return NextResponse.json({ error: "Missing required gcsUri for request document." }, { status: 400 });
@@ -128,7 +134,8 @@ export async function POST(
             data: {
                 clientId,
                 source,
-                requestedBy,
+                requestedBy: requestorName,
+                requestorId: decodedToken.uid,
                 requestDocumentUri: gcsUri,
                 demandsJson: JSON.stringify(demands),
                 status,

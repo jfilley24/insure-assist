@@ -94,7 +94,7 @@ export function PolicyUploadDropzone({ policyType, clientId, onUploadSuccess }: 
                         newPdfDoc.addPage(page);
                     }
                     const trimmedPdfBytes = await newPdfDoc.save();
-                    uploadFile = new File([new Blob([trimmedPdfBytes])], uploadFile.name, { type: uploadFile.type });
+                    uploadFile = new File([new Blob([trimmedPdfBytes as any])], uploadFile.name, { type: uploadFile.type });
 
                     if (uploadFile.size > MAX_FILE_SIZE) {
                         setError("Error: Even after trimming to 50 pages, the file size exceeds the 50MB limit. Please compress manually.");

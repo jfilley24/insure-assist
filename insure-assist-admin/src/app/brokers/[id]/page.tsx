@@ -45,6 +45,8 @@ export default function BrokerageDetails() {
     // Invite User state
     const [isInviting, setIsInviting] = useState(false);
     const [inviteEmail, setInviteEmail] = useState("");
+    const [inviteFirstName, setInviteFirstName] = useState("");
+    const [inviteLastName, setInviteLastName] = useState("");
     // Roles are fixed to broker_admin for the Super Admin module
     const inviteRole = "broker_admin";
     const [inviteLoading, setInviteLoading] = useState(false);
@@ -52,6 +54,8 @@ export default function BrokerageDetails() {
     // User Row Editing State
     const [editingUserId, setEditingUserId] = useState<string | null>(null);
     const [editUserEmail, setEditUserEmail] = useState("");
+    const [editUserFirstName, setEditUserFirstName] = useState("");
+    const [editUserLastName, setEditUserLastName] = useState("");
     const [userActionLoading, setUserActionLoading] = useState<string | null>(null);
 
     // Initial load
@@ -142,10 +146,11 @@ export default function BrokerageDetails() {
         e.preventDefault();
         setInviteLoading(true);
         try {
+            const displayName = `${inviteFirstName.trim()} ${inviteLastName.trim()}`.trim();
             const res = await fetch("/api/users/invite", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ email: inviteEmail, role: inviteRole, brokerId: id })
+                body: JSON.stringify({ email: inviteEmail, displayName, role: inviteRole, brokerId: id })
             });
             if (!res.ok) {
                 const errData = await res.json();
@@ -155,6 +160,8 @@ export default function BrokerageDetails() {
             await fetchDetail();
             setIsInviting(false);
             setInviteEmail("");
+            setInviteFirstName("");
+            setInviteLastName("");
         } catch (err: any) {
             alert("Failed to invite: " + err.message);
         } finally {
@@ -165,10 +172,11 @@ export default function BrokerageDetails() {
     const handleUpdateUser = async (uid: string) => {
         setUserActionLoading(uid);
         try {
+            const displayName = `${editUserFirstName.trim()} ${editUserLastName.trim()}`.trim();
             const res = await fetch(`/api/users/${uid}`, {
                 method: "PUT",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ email: editUserEmail })
+                body: JSON.stringify({ email: editUserEmail, displayName })
             });
             if (!res.ok) {
                 const err = await res.json();
@@ -343,29 +351,55 @@ export default function BrokerageDetails() {
                     </CardHeader>
                     <CardContent>
                         {isInviting && (
-                            <form onSubmit={handleInvite} className="mb-6 p-4 border rounded-md bg-slate-50 flex flex-col md:flex-row items-end gap-4 shadow-sm">
-                                <div className="space-y-2 flex-grow">
-                                    <label className="text-sm font-medium">User Email Address</label>
-                                    <input
-                                        required
-                                        type="email"
-                                        value={inviteEmail}
-                                        onChange={e => setInviteEmail(e.target.value)}
-                                        className="flex h-9 w-full rounded-md border border-input bg-white px-3 py-1 text-sm shadow-sm"
-                                        placeholder="agent@brokerage.com"
-                                    />
-                                </div>
-                                <div className="space-y-2">
-                                    <label className="text-sm font-medium">Role Assignment</label>
-                                    <div className="flex h-9 w-full rounded-md border border-slate-200 bg-slate-100 px-3 py-1 text-sm shadow-sm items-center text-slate-500 cursor-not-allowed">
-                                        Broker Admin
+                            <form onSubmit={handleInvite} className="mb-6 p-4 border rounded-md bg-slate-50 flex flex-col items-end gap-4 shadow-sm">
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 w-full">
+                                    <div className="space-y-2">
+                                        <label className="text-sm font-medium">First Name</label>
+                                        <input
+                                            required
+                                            type="text"
+                                            value={inviteFirstName}
+                                            onChange={e => setInviteFirstName(e.target.value)}
+                                            className="flex h-9 w-full rounded-md border border-input bg-white px-3 py-1 text-sm shadow-sm"
+                                            placeholder="John"
+                                        />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <label className="text-sm font-medium">Last Name</label>
+                                        <input
+                                            required
+                                            type="text"
+                                            value={inviteLastName}
+                                            onChange={e => setInviteLastName(e.target.value)}
+                                            className="flex h-9 w-full rounded-md border border-input bg-white px-3 py-1 text-sm shadow-sm"
+                                            placeholder="Doe"
+                                        />
+                                    </div>
+                                    <div className="space-y-2 lg:col-span-2">
+                                        <label className="text-sm font-medium">User Email Address</label>
+                                        <input
+                                            required
+                                            type="email"
+                                            value={inviteEmail}
+                                            onChange={e => setInviteEmail(e.target.value)}
+                                            className="flex h-9 w-full rounded-md border border-input bg-white px-3 py-1 text-sm shadow-sm"
+                                            placeholder="agent@brokerage.com"
+                                        />
                                     </div>
                                 </div>
-                                <div className="flex gap-2">
-                                    <Button type="button" variant="ghost" onClick={() => setIsInviting(false)}>Cancel</Button>
-                                    <Button type="submit" disabled={inviteLoading} className="bg-slate-900 text-white hover:bg-slate-800">
-                                        {inviteLoading ? "Hooking..." : "Send Secure Invite"}
-                                    </Button>
+                                <div className="flex justify-between items-end w-full">
+                                    <div className="space-y-2 w-48">
+                                        <label className="text-sm font-medium">Role Assignment</label>
+                                        <div className="flex h-9 w-full rounded-md border border-slate-200 bg-slate-100 px-3 py-1 text-sm shadow-sm items-center text-slate-500 cursor-not-allowed">
+                                            Broker Admin
+                                        </div>
+                                    </div>
+                                    <div className="flex gap-2">
+                                        <Button type="button" variant="ghost" onClick={() => setIsInviting(false)}>Cancel</Button>
+                                        <Button type="submit" disabled={inviteLoading} className="bg-slate-900 text-white hover:bg-slate-800">
+                                            {inviteLoading ? "Hooking..." : "Send Secure Invite"}
+                                        </Button>
+                                    </div>
                                 </div>
                             </form>
                         )}
@@ -387,11 +421,26 @@ export default function BrokerageDetails() {
                                                     {editingUserId === u.uid ? (
                                                         <div className="flex items-center gap-2">
                                                             <input
-                                                                className="flex h-8 w-full rounded-md border border-input px-2 py-1 text-sm bg-white"
+                                                                className="flex h-8 w-1/3 rounded-md border border-input px-2 py-1 text-sm bg-white"
+                                                                type="text"
+                                                                placeholder="First"
+                                                                value={editUserFirstName}
+                                                                onChange={(e) => setEditUserFirstName(e.target.value)}
+                                                                autoFocus
+                                                            />
+                                                            <input
+                                                                className="flex h-8 w-1/3 rounded-md border border-input px-2 py-1 text-sm bg-white"
+                                                                type="text"
+                                                                placeholder="Last"
+                                                                value={editUserLastName}
+                                                                onChange={(e) => setEditUserLastName(e.target.value)}
+                                                            />
+                                                            <input
+                                                                className="flex h-8 w-1/3 rounded-md border border-input px-2 py-1 text-sm bg-white"
                                                                 type="email"
+                                                                placeholder="Email"
                                                                 value={editUserEmail}
                                                                 onChange={(e) => setEditUserEmail(e.target.value)}
-                                                                autoFocus
                                                             />
                                                         </div>
                                                     ) : (
@@ -419,7 +468,13 @@ export default function BrokerageDetails() {
                                                         </div>
                                                     ) : (
                                                         <div className="flex justify-end gap-2">
-                                                            <Button size="sm" variant="ghost" className="h-8 w-8 p-0" title="Edit Email" onClick={() => { setEditingUserId(u.uid); setEditUserEmail(u.email); }} disabled={userActionLoading === u.uid}>
+                                                            <Button size="sm" variant="ghost" className="h-8 w-8 p-0" title="Edit User" onClick={() => {
+                                                                setEditingUserId(u.uid);
+                                                                setEditUserEmail(u.email);
+                                                                const names = (u.displayName || "").split(" ");
+                                                                setEditUserFirstName(names[0] || "");
+                                                                setEditUserLastName(names.slice(1).join(" ") || "");
+                                                            }} disabled={userActionLoading === u.uid}>
                                                                 <Pencil className="h-4 w-4 text-slate-500" />
                                                             </Button>
                                                             <Button size="sm" variant="ghost" className="h-8 w-8 p-0 hover:bg-red-50 hover:text-red-500" title="Delete User" onClick={() => handleDeleteUser(u.uid)} disabled={userActionLoading === u.uid}>

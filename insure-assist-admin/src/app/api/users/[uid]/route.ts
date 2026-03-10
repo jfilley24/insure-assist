@@ -8,15 +8,18 @@ export async function PUT(
     try {
         const { uid } = await props.params;
         const body = await request.json();
-        const { email } = body;
+        const { email, displayName } = body;
 
         if (!uid || !email) {
             return NextResponse.json({ error: "Missing uid or email" }, { status: 400 });
         }
 
-        const userRecord = await adminAuth.updateUser(uid, {
-            email: email,
-        });
+        const updateData: any = { email };
+        if (displayName !== undefined) {
+            updateData.displayName = displayName;
+        }
+
+        const userRecord = await adminAuth.updateUser(uid, updateData);
 
         return NextResponse.json({ success: true, user: userRecord }, { status: 200 });
     } catch (error: any) {

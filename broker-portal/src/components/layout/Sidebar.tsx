@@ -12,14 +12,15 @@ import {
     LogOut,
     Shield,
     Menu,
-    X
+    X,
+    UserPlusIcon
 } from "lucide-react";
 import { useState } from "react";
 
 const navItems = [
     { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
     { name: "Clients", href: "/dashboard/clients", icon: Users },
-    { name: "Settings", href: "/dashboard/settings", icon: Settings },
+    { name: "Team", href: "/dashboard/team", icon: UserPlusIcon },
 ];
 
 export function Sidebar() {

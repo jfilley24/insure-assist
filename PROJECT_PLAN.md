@@ -2,6 +2,10 @@
 
 This document serves as the persistent, cross-session source of truth for the ACORD 25 Processing Multi-Agent System implementation phases.
 
+> [!IMPORTANT]
+> **CORE BUSINESS RULE: LATEST POLICY ONLY**
+> When evaluating client policies for *any* global alerting (Expirations, Missing Fields, Compliance), the system MUST strictly filter its queries to evaluate **only the single most recently uploaded document** for a given `clientId` + `fileType` combination (e.g. the newest Auto policy). Historic policies are retained for audit trails but must be excluded from active workflow alerts to prevent false positives.
+
 ### 1. Broker Portal Hardening [COMPLETED]
 - [x] Enforce `isActive` lookup in `broker-portal` Firebase auth triggers or middleware to forcefully bounce logins for deactivated tenants.
 - [x] Implement ACORD job suspension checks when a tenant goes Inactive.
@@ -26,7 +30,7 @@ This document serves as the persistent, cross-session source of truth for the AC
 - [ ] Set up GitHub Actions CI/CD pipelines targeting isolated GCP projects (Dev, QA, Prod).
 - [ ] Configure the Email Listener (Gmail Pub/Sub) to intercept inbound cert requests at `acord25@brokerdomain.com`, funnel webhooks to our API, and fully automate the COI generation and auto-dispatch reply sequence.
 - [ ] Determine the deployment mechanism to Google Cloud Run and finalize the Edge/WAF strategy.
-    - *Decision Point*: **The "Google Native" Route (Cloud Load Balancer + Cloud Armor)**. High Security, seamless logs. Cons: $25-$30/mo base cost minimum, complex config.
+    - *Decision Point*: **The "Google Native" Route (CDN +Cloud Load Balancer + Cloud Armor)**. High Security, seamless logs. Cons: $25-$30/mo base cost minimum, complex config.
     - *Decision Point*: **The "Cloudflare Proxy" Route**. Cheaper ($0-$20/mo), easier unified dashboard with marketing. Cons: Requires custom header checks or Authenticated Origin Pulls on Cloud Run to prevent bypass.
 
 ### 5. Security & Compliance [PENDING]
@@ -48,3 +52,12 @@ This document serves as the persistent, cross-session source of truth for the AC
 ### 8. Marketing Site & Subscriptions [DEFERRED]
 - [ ] Build a public-facing Marketing Site (potentially leveraging Cloudflare Pages/Workers for speed and edge caching).
 - [ ] Integrate Stripe Billing to handle SaaS subscription tiers, automated invoicing, and trial management for brokers signing up for the platform.
+
+### 9. User Management & Identity [COMPLETED]
+- [x] Define a canonical User identity strategy using a **Shadow `User` Table in Postgres**.
+    - **Architecture Decision:** We will store `firstName`, `lastName`, `role`, and `brokerId` in a Prisma `User` model where the `id` Primary Key perfectly matches the Firebase UID. 
+    - **Why:** Relying solely on Firebase Custom Claims blobs the JWT tokens and prevents us from doing native SQL `JOIN`s (e.g. joining a User's name to a `COIRequest` record).
+    - **Workflow:** When an Admin invites a user, the API automatically generates the Firebase Auth record, grabs the UID, and inserts the profile data into our Postgres `User` table.
+- [x] Update the `cOIRequest` generating logic so that the `requestedBy` column accurately saves the actual user's First & Last Name instead of the generic "Broker Portal Agent" string.
+- [x] Build a SuperAdmin User Management module allowing the SuperAdmin to perform full CRUD on all users across all tenants, easily setting First/Last names, Roles, and assigning `brokerId`s.
+- [x] Build a "Team Settings" view in the Broker Portal, allowing local Broker Admins to invite, manage, and revoke access for their own internal Agents.

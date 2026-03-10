@@ -45,24 +45,33 @@ export function getSecurePrisma(token: any) {
                 async $allOperations({ model, operation, args, query }) {
                     // Models that should be isolated by Broker/Agent
                     // Note: Policy is implicitly isolated because we always fetch/verify the Client first.
-                    const isolatedModels = ['Client', 'COIRequest', 'CommunicationLog'];
+                    const tenantModels = ['Client', 'COIRequest', 'CommunicationLog', 'User'];
+                    const agentModels = ['Client', 'COIRequest', 'CommunicationLog'];
 
-                    if (isolatedModels.includes(model as string)) {
+                    if (tenantModels.includes(model as string)) {
                         const anyArgs = args as any;
+
+                        // Construct the filter for this specific model
+                        let modelFilter: any = { brokerId };
+
+                        // Apply Agent isolation if applicable and not an admin
+                        if (!isBrokerAdmin && agentModels.includes(model as string)) {
+                            modelFilter.agentId = uid;
+                        }
 
                         // For find, update, delete operations, merge the RLS filter into the `where` clause
                         if (['findUnique', 'findFirst', 'findMany', 'update', 'updateMany', 'delete', 'deleteMany', 'count', 'aggregate'].includes(operation)) {
                             if (!anyArgs) args = {} as any;
-                            anyArgs.where = { ...anyArgs?.where, ...baseFilter };
+                            anyArgs.where = { ...anyArgs?.where, ...modelFilter };
                         }
 
                         // For create operations, forcefully inject the owner fields
                         if (['create', 'createMany'].includes(operation)) {
                             if (!anyArgs) args = {} as any;
                             if (operation === 'create') {
-                                anyArgs.data = { ...anyArgs?.data, ...baseFilter };
+                                anyArgs.data = { ...anyArgs?.data, ...modelFilter };
                             } else if (operation === 'createMany' && Array.isArray(anyArgs?.data)) {
-                                anyArgs.data = anyArgs.data.map((item: any) => ({ ...item, ...baseFilter }));
+                                anyArgs.data = anyArgs.data.map((item: any) => ({ ...item, ...modelFilter }));
                             }
                         }
                     }
