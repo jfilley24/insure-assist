@@ -40,9 +40,12 @@ This document serves as the persistent, cross-session source of truth for the AC
 - [ ] Implement True Database-Level Role Level Security (RLS) on the production PostgreSQL database using `SET SESSION` variables to act as a Defense-in-Depth layer protecting the primary Prisma Application-Level logic.
 - [ ] Implement robust session management (Sliding Window/Absolute Timeout) and an auto-logout script for the Broker Portal to prevent unauthorized access from abandoned sessions.
 
-### 6. Dashboard Enhancements [PENDING]
-- [ ] Add a quick-view table for "Expired Policies", listing client info, policy type, and expiration date with clickable rows to navigate directly to the specific client's policy manager.
-- [ ] Add a quick-view table for "Policies Needing Review" (policies with unconfirmed null/missing fields), listing client info and missing field counts with clickable rows to navigate directly to the specific client's policy manager to fix them.
+### 6. Dashboard Enhancements [COMPLETED]
+- [x] Add a quick-view table for "Expired Policies", listing client info, policy type, and expiration date with clickable rows to navigate directly to the specific client's policy manager.
+- [x] Add a quick-view table for "Policies Needing Review" (policies with unconfirmed null/missing fields), listing client info and missing field counts with clickable rows to navigate directly to the specific client's policy manager to fix them.
+- [x] Build "Recent COI Requests" real-time widget on the Dashboard.
+- [x] Build "Top Cards & Analytics" with metrics counting total clients, active policies, etc.
+- [x] Add interactive Line Graph with Recharts trailing 30 days of COI requests.
 
 ### 7. Automated Quality Assurance [DEFERRED]
 - [ ] Install and configure `pytest` for the FastAPI Python backend to mock PDF generation workflows without burning Gemini API credits.
