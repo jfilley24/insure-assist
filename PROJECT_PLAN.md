@@ -25,7 +25,9 @@ This document serves as the persistent, cross-session source of truth for the AC
 - [ ] Finalize the setup of the GCP Artifact Registry for Docker images.
 - [ ] Set up GitHub Actions CI/CD pipelines targeting isolated GCP projects (Dev, QA, Prod).
 - [ ] Configure the Email Listener (Gmail Pub/Sub) to intercept inbound cert requests at `acord25@brokerdomain.com`, funnel webhooks to our API, and fully automate the COI generation and auto-dispatch reply sequence.
-- [ ] Determine the deployment mechanism to Google Cloud Run (behind Cloudflare/Cloud CDN).
+- [ ] Determine the deployment mechanism to Google Cloud Run and finalize the Edge/WAF strategy.
+    - *Decision Point*: **The "Google Native" Route (Cloud Load Balancer + Cloud Armor)**. High Security, seamless logs. Cons: $25-$30/mo base cost minimum, complex config.
+    - *Decision Point*: **The "Cloudflare Proxy" Route**. Cheaper ($0-$20/mo), easier unified dashboard with marketing. Cons: Requires custom header checks or Authenticated Origin Pulls on Cloud Run to prevent bypass.
 
 ### 5. Security & Compliance [PENDING]
 - [ ] Invoke the `security-compliance-compliance-check` skill across our GCP infrastructure design.
@@ -42,3 +44,7 @@ This document serves as the persistent, cross-session source of truth for the AC
 - [ ] Install and configure `pytest` for the FastAPI Python backend to mock PDF generation workflows without burning Gemini API credits.
 - [ ] Install and configure `Playwright` to run End-to-End browser UI tests on Next.js to mathematically guarantee regressions do not break core portal functionality.
 - [ ] Configure Git `husky` Pre-commit Hooks to block failing commits from reaching production.
+
+### 8. Marketing Site & Subscriptions [DEFERRED]
+- [ ] Build a public-facing Marketing Site (potentially leveraging Cloudflare Pages/Workers for speed and edge caching).
+- [ ] Integrate Stripe Billing to handle SaaS subscription tiers, automated invoicing, and trial management for brokers signing up for the platform.
