@@ -92,7 +92,12 @@ class CompleterOutput(BaseModel):
     acord_fields: List[FieldMapping] = Field(description="A list of mappings for the ACORD 25 form fields.")
 
 # --- Reviewer Schema ---
+class PolicyReview(BaseModel):
+    policy_type: str = Field(description="The name of the policy, e.g. 'General Liability'")
+    status: str = Field(description="The status for this specific policy: 'PASSED', 'FAILED', or 'NEEDS REVIEW'")
+    comments: List[str] = Field(description="A list of specific comments explaining any gaps or stating 'All demands met.'")
+
 class ReviewerOutput(BaseModel):
     passed: bool = Field(description="True if all requested coverages are met, False otherwise.")
-    gaps: List[str] = Field(description="A list of missing coverages or shortcomings.")
-    report: str = Field(description="Markdown formatted text detailing the full audit summary.")
+    gaps: List[str] = Field(description="A list of all missing coverages or shortcomings across all policies.")
+    policy_reviews: List[PolicyReview] = Field(description="A structured list of feedback broken down per policy type.")

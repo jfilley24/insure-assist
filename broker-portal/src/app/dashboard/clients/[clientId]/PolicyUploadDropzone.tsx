@@ -73,6 +73,47 @@ export function PolicyUploadDropzone({ policyType, clientId, onUploadSuccess }: 
             return;
         }
 
+        let uploadFile = file;
+        const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB
+        if (uploadFile.size > MAX_FILE_SIZE) {
+            setIsUploading(true);
+            setUploadStep("Large file detected. Trimming to first 50 pages...");
+            try {
+                const { PDFDocument } = await import('pdf-lib');
+                const arrayBuffer = await uploadFile.arrayBuffer();
+                // Load while ignoring encryption in case of password-protected reading scopes
+                const pdfDoc = await PDFDocument.load(arrayBuffer, { ignoreEncryption: true });
+                const pageCount = pdfDoc.getPageCount();
+
+                if (pageCount > 50) {
+                    const newPdfDoc = await PDFDocument.create();
+                    // Extract exactly pages 0 to 49
+                    const pagesToCopy = Array.from({ length: 50 }, (_, i) => i);
+                    const copiedPages = await newPdfDoc.copyPages(pdfDoc, pagesToCopy);
+                    for (const page of copiedPages) {
+                        newPdfDoc.addPage(page);
+                    }
+                    const trimmedPdfBytes = await newPdfDoc.save();
+                    uploadFile = new File([new Blob([trimmedPdfBytes])], uploadFile.name, { type: uploadFile.type });
+
+                    if (uploadFile.size > MAX_FILE_SIZE) {
+                        setError("Error: Even after trimming to 50 pages, the file size exceeds the 50MB limit. Please compress manually.");
+                        setIsUploading(false);
+                        return;
+                    }
+                } else {
+                    setError("Error: File size exceeds the 50MB limit, but has fewer than 50 pages so it cannot be trimmed safely. Please compress manually.");
+                    setIsUploading(false);
+                    return;
+                }
+            } catch (trimErr: any) {
+                console.error("Failed to trim PDF:", trimErr);
+                setError("Error: Failed to process large PDF automatically. Please compress or split manually.");
+                setIsUploading(false);
+                return;
+            }
+        }
+
         setIsUploading(true);
         setUploadStep("Requesting secure upload link...");
         try {
@@ -86,7 +127,7 @@ export function PolicyUploadDropzone({ policyType, clientId, onUploadSuccess }: 
                 },
                 body: JSON.stringify({
                     policyType,
-                    contentType: file.type
+                    contentType: uploadFile.type
                 })
             });
 
@@ -103,9 +144,9 @@ export function PolicyUploadDropzone({ policyType, clientId, onUploadSuccess }: 
             const uploadRes = await fetch(uploadUrl, {
                 method: "PUT",
                 headers: {
-                    "Content-Type": file.type
+                    "Content-Type": uploadFile.type
                 },
-                body: file
+                body: uploadFile
             });
 
             if (!uploadRes.ok) {
@@ -123,7 +164,7 @@ export function PolicyUploadDropzone({ policyType, clientId, onUploadSuccess }: 
                 },
                 body: JSON.stringify({
                     gcsUri,
-                    filename: file.name,
+                    filename: uploadFile.name,
                     policyType
                 })
             });
@@ -136,13 +177,12 @@ export function PolicyUploadDropzone({ policyType, clientId, onUploadSuccess }: 
             if (onUploadSuccess) {
                 onUploadSuccess();
             }
-            setSuccessMsg(`${file.name} successfully uploaded and ingested by AI.`);
+            setSuccessMsg(`${uploadFile.name} successfully uploaded and ingested by AI.`);
 
         } catch (err: any) {
             console.error("Upload failed", err);
-            // Show the raw stack trace if the API returned it so we can fix the 500 error
-            const displayError = err.stack ? `${err.message}\n${err.stack}` : (err.message || "Failed to upload policy document.");
-            setError(displayError);
+            // Just show the clean message from the API, don't dump the raw browser stack trace into the UI
+            setError(err.message || "Failed to upload policy document.");
         } finally {
             setIsUploading(false);
             if (fileInputRef.current) {

@@ -12,12 +12,24 @@ export function initAdmin() {
     };
 
     // Utilizing applicationDefault() correctly delegates authentication dynamically.
-    // If GOOGLE_APPLICATION_CREDENTIALS is set, it reads the JSON. If it's a User Identity
-    // it connects securely. If it's a Service Account, it uses it.
+    // However, for generating Signed URLs local "User Identity" will fail.
+    // If GOOGLE_APPLICATION_CREDENTIALS is set, we explicitly mandate the cert loading so it isn't swallowed by host defaults.
     try {
-        config.credential = admin.credential.applicationDefault();
+        if (process.env.GOOGLE_APPLICATION_CREDENTIALS) {
+            // Check if the var is an absolute path to a file (dev) or stringified JSON (prod)
+            const credPathOrStr = process.env.GOOGLE_APPLICATION_CREDENTIALS;
+            if (credPathOrStr.startsWith('{')) {
+                config.credential = admin.credential.cert(JSON.parse(credPathOrStr));
+            } else {
+                // eslint-disable-next-line @typescript-eslint/no-require-imports
+                const serviceAccount = require(credPathOrStr);
+                config.credential = admin.credential.cert(serviceAccount);
+            }
+        } else {
+            config.credential = admin.credential.applicationDefault();
+        }
     } catch (e: any) {
-        console.warn("Application Default Credential warning:", e.message);
+        console.warn("Firebase Admin Credential warning:", e.message);
     }
 
     return admin.initializeApp(config);

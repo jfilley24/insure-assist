@@ -8,6 +8,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
 import { PolicyManager } from "./PolicyManager";
+import { CoiRequestManager } from "./CoiRequestManager";
+import { ClientHistoryTab } from "./ClientHistoryTab";
 
 export default function ClientDetailPage() {
     const params = useParams();
@@ -84,12 +86,16 @@ export default function ClientDetailPage() {
                 </div>
             </div>
 
-            <Tabs defaultValue="policies" className="w-full">
-                <TabsList className="bg-slate-100 border-b border-slate-200 w-full justify-start rounded-none h-auto p-0">
-                    <TabsTrigger value="policies" className="data-[state=active]:bg-white data-[state=active]:border-b-2 data-[state=active]:border-blue-600 rounded-none px-6 py-3">
+            <Tabs defaultValue="requests" className="w-full">
+                {/* Clean underline style tabs */}
+                <TabsList variant="line" className="w-full justify-start h-auto p-0 border-b border-slate-200 mb-6 gap-6">
+                    <TabsTrigger value="requests" className="px-1 py-3 text-base data-[state=active]:text-blue-600 data-[state=active]:after:bg-blue-600">
+                        Requests & Communications
+                    </TabsTrigger>
+                    <TabsTrigger value="policies" className="px-1 py-3 text-base data-[state=active]:text-blue-600 data-[state=active]:after:bg-blue-600">
                         Policy Documents
                     </TabsTrigger>
-                    <TabsTrigger value="acord-rules" className="data-[state=active]:bg-white data-[state=active]:border-b-2 data-[state=active]:border-blue-600 rounded-none px-6 py-3">
+                    <TabsTrigger value="acord-rules" className="px-1 py-3 text-base data-[state=active]:text-blue-600 data-[state=active]:after:bg-blue-600">
                         ACORD Settings
                     </TabsTrigger>
                 </TabsList>
@@ -186,6 +192,28 @@ export default function ClientDetailPage() {
                         </CardHeader>
                         <CardContent>
                             <p className="text-sm text-slate-600">Coming soon. You'll be able to tell the AI specific rules (e.g. "Always check the waiver of subrogation box for GL on this client's requests").</p>
+                        </CardContent>
+                    </Card>
+                </TabsContent>
+
+                <TabsContent value="requests" className="mt-6 space-y-6">
+                    <CoiRequestManager
+                        clientId={client.id}
+                        client={client}
+                        clientEmail={client.primaryEmail || (client.authorizedDomains?.[0] ? `contact@${client.authorizedDomains[0]}` : undefined)}
+                    />
+
+                    <Card>
+                        <CardHeader>
+                            <CardTitle className="text-lg">Communication History</CardTitle>
+                            <CardDescription>Log of all generated ACORD COI Requests and dispatched emails for this client.</CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            <ClientHistoryTab
+                                clientId={client.id}
+                                clientName={client.name}
+                                clientEmail={client.primaryEmail || (client.authorizedDomains?.[0] ? `contact@${client.authorizedDomains[0]}` : undefined)}
+                            />
                         </CardContent>
                     </Card>
                 </TabsContent>

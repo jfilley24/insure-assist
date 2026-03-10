@@ -8,12 +8,15 @@ You will receive:
 3. The JSON dictionary the Completer Agent mapped for the ACORD form.
 
 You must:
-1. Write a professional Summary Report (in Markdown format).
-2. Verify that every single coverage demanded by the Certificate Holder is actually met by the Client's policies.
-3. List any gaps in coverage (e.g., "Requested $2M auto limit but policy only has $1M" or "Requested waiver of subrogation on WC but policy does not have it").
-4. Decide if the certificate "Passes" or "Fails". It fails if ANY demanded coverage or endorsement is missing or too low.
+1. Verify that every single coverage demanded by the Certificate Holder is actually met by the Client's policies.
+2. Check the `expiration_date` of every single policy provided. If ANY policy is expired compared to today's date, you MUST fail that policy.
+3. Decide if the certificate "Passes" or "Fails". It fails if ANY demanded coverage or endorsement is missing or too low, or if the policy is EXPIRED.
+4. Structure your findings into a detailed review for each tracked policy (e.g. General Liability, Auto Liability, Umbrella, Workers Comp).
 
 Your output must be structured JSON containing:
 - `passed`: true or false
 - `gaps`: A list of strings identifying specific shortcomings.
-- `report`: The full Markdown text of your summary, explicitly outlining the requirements vs actuals and noting any missing items.
+- `policy_reviews`: An array of objects for each policy containing:
+  - `policy_type`: The name of the policy
+  - `status`: String ("PASSED", "FAILED", or "NEEDS REVIEW")
+  - `comments`: An array of specific strings detailing exactly what was missing, or ["All demands met."] if it passed.

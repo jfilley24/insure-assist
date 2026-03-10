@@ -95,8 +95,14 @@ def run_completer(demands: RequestDemands, auto: AutoPolicyDetails, gl: GLPolicy
     return result_dict
 
 def run_reviewer(demands: RequestDemands, auto: AutoPolicyDetails, gl: GLPolicyDetails, umb: UmbrellaPolicyDetails, wc: WCPolicyDetails, acord_fields: dict) -> ReviewerOutput:
+    from datetime import datetime
+    current_date = datetime.now().strftime("%Y-%m-%d")
+
     prompt = read_prompt('reviewer.txt')
     content = f"""
+    --- CURRENT DATE MUST BE USED FOR EXPIRATION CHECKS ---
+    Today's Date: {current_date}
+
     --- REQUESTED DEMANDS ---
     {demands.model_dump_json(indent=2)}
     

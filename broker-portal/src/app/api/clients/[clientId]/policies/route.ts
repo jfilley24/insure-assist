@@ -99,6 +99,37 @@ export async function POST(
         console.log(`Received Structured Response from Vertex AI (Phase 1).`);
         const keyFieldsResp = structuredResult.response.candidates?.[0]?.content?.parts?.[0]?.text || "{}";
 
+        const cleanJsonString = (raw: string) => {
+            let clean = raw.trim();
+            if (clean.startsWith('```')) {
+                clean = clean.replace(/^```(json)?\n?/i, '').replace(/\n?```$/i, '').trim();
+            }
+            return clean;
+        };
+
+        const cleanedKeyFields = cleanJsonString(keyFieldsResp);
+        let keyFieldsJson = null;
+        try {
+            JSON.parse(cleanedKeyFields);
+            keyFieldsJson = cleanedKeyFields;
+        } catch (e) {
+            console.error("Failed to parse structured JSON from Vertex", e);
+            keyFieldsJson = cleanedKeyFields; // Save it anyway for debugging
+        }
+
+        // --- IMMEDIATELY SHORT-CIRCUIT IF WRONG DOCUMENT TYPE ---
+        if (keyFieldsJson) {
+            try {
+                const parsedStructured = JSON.parse(keyFieldsJson);
+                if (parsedStructured.is_matching_policy_type === false) {
+                    console.error(`Document mismatch detected in Phase 1: Expected ${policyType}`);
+                    return NextResponse.json({ error: `The uploaded document does not appear to be a valid ${policyType} policy.` }, { status: 400 });
+                }
+            } catch (e) {
+                // Ignore parse errors here
+            }
+        }
+
         // 2. Generate Unstructured Free Form
         const freeFormPrompt = `Read the attached PDF and create a comprehensive, completely flexible JSON representation of the entire document. Extract any endorsements, exclusions, special notes, and detailed structures that might be useful for a conversational agent answering questions about the policy later. It must be valid JSON starting with a top-level key like "document".`;
         console.log(`Sending Freeform Request to Vertex AI (Phase 2)...`);
@@ -114,26 +145,7 @@ export async function POST(
         console.log(`Received Freeform Response from Vertex AI (Phase 2).`);
         const freeFormResp = freeFormResult.response.candidates?.[0]?.content?.parts?.[0]?.text || "{}";
 
-        let keyFieldsJson = null;
         let freeFormJson = null;
-
-        const cleanJsonString = (raw: string) => {
-            let clean = raw.trim();
-            if (clean.startsWith('```')) {
-                clean = clean.replace(/^```(json)?\n?/i, '').replace(/\n?```$/i, '').trim();
-            }
-            return clean;
-        };
-
-        const cleanedKeyFields = cleanJsonString(keyFieldsResp);
-        try {
-            JSON.parse(cleanedKeyFields);
-            keyFieldsJson = cleanedKeyFields;
-        } catch (e) {
-            console.error("Failed to parse structured JSON from Vertex", e);
-            keyFieldsJson = cleanedKeyFields; // Save it anyway for debugging
-        }
-
         const cleanedFreeForm = cleanJsonString(freeFormResp);
         try {
             JSON.parse(cleanedFreeForm);

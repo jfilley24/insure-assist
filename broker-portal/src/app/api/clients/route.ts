@@ -67,7 +67,7 @@ export async function POST(request: Request) {
         }
 
         const body = await request.json();
-        const { name, authorizedDomains } = body;
+        const { name, authorizedDomains, primaryEmail } = body;
         const brokerId = decodedToken.brokerId; // System-derived
 
         if (!name) {
@@ -111,6 +111,7 @@ export async function POST(request: Request) {
                 name,
                 brokerId,
                 authorizedDomains: validatedDomains.join(','),
+                primaryEmail,
                 updatedById: decodedToken.uid
             }
         });

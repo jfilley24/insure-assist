@@ -27,12 +27,14 @@ export function EditClientSheet({ client, isOpen, onOpenChange, onSuccess }: Edi
 
     const [name, setName] = useState(client?.name || "");
     const [domainsInput, setDomainsInput] = useState(client?.authorizedDomains?.join(", ") || "");
+    const [primaryEmail, setPrimaryEmail] = useState(client?.primaryEmail || "");
 
     // Handle updates when the client object changes
     useEffect(() => {
         if (client) {
             setName(client.name || "");
             setDomainsInput(client.authorizedDomains?.join(", ") || "");
+            setPrimaryEmail(client.primaryEmail || "");
             setError(null);
         }
     }, [client, isOpen]);
@@ -70,7 +72,8 @@ export function EditClientSheet({ client, isOpen, onOpenChange, onSuccess }: Edi
                 },
                 body: JSON.stringify({
                     name,
-                    authorizedDomains
+                    authorizedDomains,
+                    primaryEmail: primaryEmail ? primaryEmail.trim() : null
                 })
             });
 
@@ -136,6 +139,23 @@ export function EditClientSheet({ client, isOpen, onOpenChange, onSuccess }: Edi
                             />
                             <p className="text-[11px] text-slate-500 font-medium">
                                 Comma-separated domains. We use these to automatically route inbound ACORD requests to this specific client's policy stack.
+                            </p>
+                        </div>
+
+                        <div className="space-y-2">
+                            <Label htmlFor="edit-primaryEmail" className="text-sm font-semibold text-slate-700">
+                                Primary Email
+                            </Label>
+                            <Input
+                                id="edit-primaryEmail"
+                                type="email"
+                                value={primaryEmail}
+                                onChange={(e) => setPrimaryEmail(e.target.value)}
+                                placeholder="e.g. contact@client.com"
+                                className="border-slate-300 focus-visible:ring-blue-500"
+                            />
+                            <p className="text-[11px] text-slate-500 font-medium">
+                                We will automatically email the generated Certificate of Insurance to this address.
                             </p>
                         </div>
                     </div>

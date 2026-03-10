@@ -27,6 +27,7 @@ export function AddClientSheet({ onSuccess }: AddClientSheetProps) {
 
     const [name, setName] = useState("");
     const [domainsInput, setDomainsInput] = useState("");
+    const [primaryEmail, setPrimaryEmail] = useState("");
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -62,6 +63,7 @@ export function AddClientSheet({ onSuccess }: AddClientSheetProps) {
                 body: JSON.stringify({
                     name,
                     authorizedDomains,
+                    primaryEmail: primaryEmail ? primaryEmail.trim() : null,
                     // TODO: Replace with dynamic multi-tenant ID mapping later
                     brokerId: "test-broker-123"
                 })
@@ -71,6 +73,7 @@ export function AddClientSheet({ onSuccess }: AddClientSheetProps) {
                 setIsOpen(false);
                 setName("");
                 setDomainsInput("");
+                setPrimaryEmail("");
                 setError(null);
                 onSuccess(); // Triggers parent table refresh
             } else {
@@ -136,6 +139,23 @@ export function AddClientSheet({ onSuccess }: AddClientSheetProps) {
                             />
                             <p className="text-[11px] text-slate-500 font-medium">
                                 Comma-separated domains. We use these to automatically route inbound ACORD requests to this specific client's policy stack.
+                            </p>
+                        </div>
+
+                        <div className="space-y-2">
+                            <Label htmlFor="primaryEmail" className="text-sm font-semibold text-slate-700">
+                                Primary Email
+                            </Label>
+                            <Input
+                                id="primaryEmail"
+                                type="email"
+                                value={primaryEmail}
+                                onChange={(e) => setPrimaryEmail(e.target.value)}
+                                placeholder="e.g. contact@client.com"
+                                className="border-slate-300 focus-visible:ring-blue-500"
+                            />
+                            <p className="text-[11px] text-slate-500 font-medium">
+                                We will automatically email the generated Certificate of Insurance to this address.
                             </p>
                         </div>
                     </div>

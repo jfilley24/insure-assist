@@ -1,16 +1,17 @@
 import { SchemaType, Schema } from "@google-cloud/vertexai";
 
-export const Prompts: Record<string, string> = {
-    AUTO: `You are the Auto Policy Reader Agent, a specialized insurance AI whose sole job is to analyze Commercial Auto Liability policy documents. Read the provided policy document and extract the exact coverages your client actually has. If a specific limit or coverage type is missing, return null or false.`,
-    GL: `You are the General Liability Policy Reader Agent, a specialized insurance AI whose sole job is to analyze Commercial General Liability policy documents. Read the provided policy document and extract the exact coverages your client actually has. If a specific limit or coverage type is missing, return null or false.`,
-    WC: `You are the Workers Compensation Policy Reader Agent, a specialized insurance AI whose sole job is to analyze Workers Compensation policy documents. Read the provided policy document and extract the exact coverages. If a specific limit or coverage type is missing, return null or false.`,
-    UMBRELLA: `You are the Umbrella Liability Policy Reader Agent, a specialized insurance AI whose sole job is to analyze Commercial Umbrella or Excess Liability policy documents. Read the provided policy document and extract the exact coverages. If a specific limit or coverage type is missing, return null or false.`
-};
 
+export const Prompts: Record<string, string> = {
+    AUTO: `You are the Auto Policy Reader Agent, a specialized insurance AI whose sole job is to analyze Commercial Auto Liability policy documents. Read the provided policy document. First, strictly verify if this document is actually an Auto Liability policy. If it is a different type of policy (like General Liability or Workers Comp), set "is_matching_policy_type" to false and return null for all other fields. If it matches, extract the exact coverages your client actually has. If a specific limit or coverage type is missing, return null or false.`,
+    GL: `You are the General Liability Policy Reader Agent, a specialized insurance AI whose sole job is to analyze Commercial General Liability policy documents. Read the provided policy document. First, strictly verify if this document is actually a General Liability policy. If it is a different type of policy (like Auto or Workers Comp), set "is_matching_policy_type" to false and return null for all other fields. If it matches, extract the exact coverages your client actually has. If a specific limit or coverage type is missing, return null or false.`,
+    WC: `You are the Workers Compensation Policy Reader Agent, a specialized insurance AI whose sole job is to analyze Workers Compensation policy documents. Read the provided policy document. First, strictly verify if this document is actually a Workers Compensation policy. If it is a different type of policy (like Auto or General Liability), set "is_matching_policy_type" to false and return null for all other fields. If it matches, extract the exact coverages your client actually has. If a specific limit or coverage type is missing, return null or false.`,
+    UMBRELLA: `You are the Umbrella Liability Policy Reader Agent, a specialized insurance AI whose sole job is to analyze Commercial Umbrella or Excess Liability policy documents. Read the provided policy document. First, strictly verify if this document is actually an Umbrella or Excess policy. If it is a different type of policy (like Auto or General Liability), set "is_matching_policy_type" to false and return null for all other fields. If it matches, extract the exact coverages your client actually has. If a specific limit or coverage type is missing, return null or false.`
+};
 export const Schemas: Record<string, Schema> = {
     AUTO: {
         type: SchemaType.OBJECT,
         properties: {
+            is_matching_policy_type: { type: SchemaType.BOOLEAN, description: "True if the document is actually an Auto policy. False if it is a different insurance type." },
             insurer_name: { type: SchemaType.STRING, nullable: true },
             policy_number: { type: SchemaType.STRING, nullable: true },
             effective_date: { type: SchemaType.STRING, description: "ISO 8601 Date", nullable: true },
@@ -29,6 +30,7 @@ export const Schemas: Record<string, Schema> = {
     GL: {
         type: SchemaType.OBJECT,
         properties: {
+            is_matching_policy_type: { type: SchemaType.BOOLEAN, description: "True if the document is actually a General Liability policy. False if it is a different insurance type." },
             insurer_name: { type: SchemaType.STRING, nullable: true },
             policy_number: { type: SchemaType.STRING, nullable: true },
             effective_date: { type: SchemaType.STRING, description: "ISO 8601 Date", nullable: true },
@@ -48,6 +50,7 @@ export const Schemas: Record<string, Schema> = {
     WC: {
         type: SchemaType.OBJECT,
         properties: {
+            is_matching_policy_type: { type: SchemaType.BOOLEAN, description: "True if the document is actually a Workers Compensation policy. False if it is a different insurance type." },
             insurer_name: { type: SchemaType.STRING, nullable: true },
             policy_number: { type: SchemaType.STRING, nullable: true },
             effective_date: { type: SchemaType.STRING, description: "ISO 8601 Date", nullable: true },
@@ -62,6 +65,7 @@ export const Schemas: Record<string, Schema> = {
     UMBRELLA: {
         type: SchemaType.OBJECT,
         properties: {
+            is_matching_policy_type: { type: SchemaType.BOOLEAN, description: "True if the document is actually an Umbrella policy. False if it is a different insurance type." },
             insurer_name: { type: SchemaType.STRING, nullable: true },
             policy_number: { type: SchemaType.STRING, nullable: true },
             effective_date: { type: SchemaType.STRING, description: "ISO 8601 Date", nullable: true },

@@ -87,7 +87,7 @@ export async function PUT(
         const clientId = resolvedParams.clientId;
 
         const body = await request.json();
-        const { name, authorizedDomains } = body;
+        const { name, authorizedDomains, primaryEmail } = body;
 
         if (!name) {
             return NextResponse.json({ error: "Missing required field: name" }, { status: 400 });
@@ -141,6 +141,7 @@ export async function PUT(
             data: {
                 name,
                 authorizedDomains: validatedDomains.join(','),
+                primaryEmail,
                 updatedById: decodedToken.uid
             }
         });

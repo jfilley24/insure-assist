@@ -42,8 +42,14 @@ model Client {
 
   // Contact matching (for ACORD routing)
   authorizedDomains String   // SQLite doesn't support arrays, mapping to comma-separated string
+  primaryEmail      String?  // The primary contact email for dispatching COIs
+  
+  // Agent Assignment
+  agentId         String?    // Firebase UID of the assigned agent
   
   policies        Policy[]
+  coiRequests     COIRequest[]
+  communicationLogs CommunicationLog[]
 }
 
 // ----------------------------------------------------------------------------------
@@ -96,4 +102,60 @@ model AuditLog {
   // Tie the log specifically to the tenant to ensure logs are siloed
   brokerId      String
   broker        Broker   @relation(fields: [brokerId], references: [id], onDelete: Cascade)
+}
+
+// ----------------------------------------------------------------------------------
+// COI Requests
+// ----------------------------------------------------------------------------------
+model COIRequest {
+  id                  String   @id @default(uuid())
+  createdAt           DateTime @default(now())
+  
+  source              String   // e.g. "PORTAL" or "EMAIL"
+  requestedBy         String?  // Name or email of who asked for it
+  
+  // The raw document uploaded or emailed demanding the cert
+  requestDocumentUri  String?  
+  
+  // JSON payload of extracted demands from Gemini
+  demandsJson         String?  
+  
+  // Status of the AI review against the policies
+  status              String   // e.g. "PASSED", "FAILED"
+  
+  // Markdown formatted explanation from the Reviewer Bot
+  reviewReport        String?  
+  
+  // The final filled native PDF document ready for download/email
+  generatedPdfUri     String?  
+  
+  // Tie the request to a specific client and broker
+  clientId            String
+  client              Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  brokerId            String
+  
+  communicationLogs   CommunicationLog[]
+}
+
+// ----------------------------------------------------------------------------------
+// Communication Logs 
+// ----------------------------------------------------------------------------------
+model CommunicationLog {
+  id              String   @id @default(uuid())
+  createdAt       DateTime @default(now())
+  
+  type            String   // e.g. "EMAIL_INBOUND", "EMAIL_OUTBOUND"
+  subject         String?
+  body            String?
+  from            String?
+  to              String?
+  cc              String?
+  
+  // Optional linkage if this email was directly about a COI request
+  coiRequestId    String?
+  coiRequest      COIRequest? @relation(fields: [coiRequestId], references: [id], onDelete: Cascade)
+  
+  clientId        String
+  client          Client      @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  brokerId        String
 }
