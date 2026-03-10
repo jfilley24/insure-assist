@@ -57,14 +57,6 @@ export default function DashboardPage() {
                     <h1 className="text-3xl font-bold text-slate-900 tracking-tight">Dashboard Overview</h1>
                     <p className="text-slate-500 mt-1">Manage policies, clients, and generate ACORD certificates.</p>
                 </div>
-                <div className="flex gap-2">
-                    <Button variant="outline" className="bg-white">
-                        <Clock className="h-4 w-4 mr-2" /> Recent Activity
-                    </Button>
-                    <Button className="bg-blue-600 hover:bg-blue-700 text-white">
-                        <CopyPlus className="h-4 w-4 mr-2" /> New COI
-                    </Button>
-                </div>
             </header>
 
             {/* Quick Stats Grid */}
@@ -89,20 +81,20 @@ export default function DashboardPage() {
                 </Card>
                 <Card className="shadow-sm border-slate-200">
                     <CardHeader className="flex flex-row items-center justify-between pb-2">
-                        <CardTitle className="text-sm font-medium text-slate-500">Policies Needing Review</CardTitle>
-                        <InboxIcon className="h-4 w-4 text-amber-500" />
-                    </CardHeader>
-                    <CardContent>
-                        <div className="text-2xl font-bold text-slate-900">{isLoading || !metrics ? "-" : metrics.reviewPolicies}</div>
-                    </CardContent>
-                </Card>
-                <Card className="shadow-sm border-slate-200">
-                    <CardHeader className="flex flex-row items-center justify-between pb-2">
                         <CardTitle className="text-sm font-medium text-slate-500">Expired Policies</CardTitle>
                         <AlertTriangle className="h-4 w-4 text-red-500" />
                     </CardHeader>
                     <CardContent>
                         <div className="text-2xl font-bold text-slate-900">{isLoading || !metrics ? "-" : metrics.expiredPolicies}</div>
+                    </CardContent>
+                </Card>
+                <Card className="shadow-sm border-slate-200">
+                    <CardHeader className="flex flex-row items-center justify-between pb-2">
+                        <CardTitle className="text-sm font-medium text-slate-500">Policies Needing Review</CardTitle>
+                        <InboxIcon className="h-4 w-4 text-amber-500" />
+                    </CardHeader>
+                    <CardContent>
+                        <div className="text-2xl font-bold text-slate-900">{isLoading || !metrics ? "-" : metrics.reviewPolicies}</div>
                     </CardContent>
                 </Card>
             </div>
@@ -172,60 +164,6 @@ export default function DashboardPage() {
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
 
-                {/* Needs Review Widget */}
-                <Card className="shadow-sm border-slate-200">
-                    <CardHeader className="border-b border-slate-100 bg-slate-50/50">
-                        <div className="flex items-center justify-between">
-                            <CardTitle className="text-lg flex items-center gap-2">
-                                <InboxIcon className="h-5 w-5 text-amber-500" />
-                                Policies Needing Review
-                            </CardTitle>
-                            {!isLoading && reviewPolicies.length > 0 && (
-                                <Badge variant="secondary" className="bg-amber-100 text-amber-700 hover:bg-amber-100 border-none">
-                                    {reviewPolicies.length} Pending
-                                </Badge>
-                            )}
-                        </div>
-                    </CardHeader>
-                    <CardContent className="p-0">
-                        {isLoading ? (
-                            <div className="p-8 text-center text-slate-500 text-sm animate-pulse">Loading review queue...</div>
-                        ) : reviewPolicies.length === 0 ? (
-                            <div className="p-8 text-center text-slate-500 text-sm">All active policies are fully reviewed and confirmed!</div>
-                        ) : (
-                            <Table>
-                                <TableHeader>
-                                    <TableRow className="hover:bg-transparent">
-                                        <TableHead>Client</TableHead>
-                                        <TableHead>Type</TableHead>
-                                        <TableHead>Missing Fields</TableHead>
-                                    </TableRow>
-                                </TableHeader>
-                                <TableBody>
-                                    {reviewPolicies.map((policy) => (
-                                        <TableRow
-                                            key={policy.id}
-                                            className="cursor-pointer hover:bg-slate-50 transition-colors"
-                                            onClick={() => router.push(`/dashboard/clients/${policy.client.id}`)}
-                                        >
-                                            <TableCell className="font-medium text-slate-900">{policy.client.name}</TableCell>
-                                            <TableCell>
-                                                <Badge variant="secondary" className="bg-slate-100 text-slate-700 hover:bg-slate-100 font-mono text-xs">
-                                                    {policy.fileType}
-                                                </Badge>
-                                            </TableCell>
-                                            <TableCell className="text-amber-600 font-medium text-sm flex items-center gap-1.5">
-                                                <AlertTriangle className="h-3 w-3" />
-                                                {policy.missingFieldsCount} empty
-                                            </TableCell>
-                                        </TableRow>
-                                    ))}
-                                </TableBody>
-                            </Table>
-                        )}
-                    </CardContent>
-                </Card>
-
                 {/* Expired Policies Widget */}
                 <Card className="shadow-sm border-slate-200">
                     <CardHeader className="border-b border-slate-100 bg-slate-50/50">
@@ -274,6 +212,60 @@ export default function DashboardPage() {
                                             </TableCell>
                                             <TableCell className="text-red-600 font-medium text-sm">
                                                 {formatDistanceToNow(new Date(policy.expirationDate))} ago
+                                            </TableCell>
+                                        </TableRow>
+                                    ))}
+                                </TableBody>
+                            </Table>
+                        )}
+                    </CardContent>
+                </Card>
+
+                {/* Needs Review Widget */}
+                <Card className="shadow-sm border-slate-200">
+                    <CardHeader className="border-b border-slate-100 bg-slate-50/50">
+                        <div className="flex items-center justify-between">
+                            <CardTitle className="text-lg flex items-center gap-2">
+                                <InboxIcon className="h-5 w-5 text-amber-500" />
+                                Policies Needing Review
+                            </CardTitle>
+                            {!isLoading && reviewPolicies.length > 0 && (
+                                <Badge variant="secondary" className="bg-amber-100 text-amber-700 hover:bg-amber-100 border-none">
+                                    {reviewPolicies.length} Pending
+                                </Badge>
+                            )}
+                        </div>
+                    </CardHeader>
+                    <CardContent className="p-0">
+                        {isLoading ? (
+                            <div className="p-8 text-center text-slate-500 text-sm animate-pulse">Loading review queue...</div>
+                        ) : reviewPolicies.length === 0 ? (
+                            <div className="p-8 text-center text-slate-500 text-sm">All active policies are fully reviewed and confirmed!</div>
+                        ) : (
+                            <Table>
+                                <TableHeader>
+                                    <TableRow className="hover:bg-transparent">
+                                        <TableHead>Client</TableHead>
+                                        <TableHead>Type</TableHead>
+                                        <TableHead>Missing Fields</TableHead>
+                                    </TableRow>
+                                </TableHeader>
+                                <TableBody>
+                                    {reviewPolicies.map((policy) => (
+                                        <TableRow
+                                            key={policy.id}
+                                            className="cursor-pointer hover:bg-slate-50 transition-colors"
+                                            onClick={() => router.push(`/dashboard/clients/${policy.client.id}`)}
+                                        >
+                                            <TableCell className="font-medium text-slate-900">{policy.client.name}</TableCell>
+                                            <TableCell>
+                                                <Badge variant="secondary" className="bg-slate-100 text-slate-700 hover:bg-slate-100 font-mono text-xs">
+                                                    {policy.fileType}
+                                                </Badge>
+                                            </TableCell>
+                                            <TableCell className="text-amber-600 font-medium text-sm flex items-center gap-1.5">
+                                                <AlertTriangle className="h-3 w-3" />
+                                                {policy.missingFieldsCount} empty
                                             </TableCell>
                                         </TableRow>
                                     ))}
