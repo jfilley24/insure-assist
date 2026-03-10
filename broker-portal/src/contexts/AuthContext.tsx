@@ -37,14 +37,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     useEffect(() => {
         const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
             if (firebaseUser) {
-                // Ensure custom claims are refreshed
-                await firebaseUser.getIdToken(true);
-                const decodedToken = await firebaseUser.getIdTokenResult();
-                const jwtToken = await firebaseUser.getIdToken();
+                try {
+                    // Try to force refresh custom claims
+                    await firebaseUser.getIdToken(true);
+                } catch (error) {
+                    console.warn("Could not force refresh Firebase token (network error). Using cached token.", error);
+                }
 
-                setToken(jwtToken);
-                setCustomClaims(decodedToken.claims);
-                setUser(firebaseUser);
+                try {
+                    const decodedToken = await firebaseUser.getIdTokenResult();
+                    const jwtToken = await firebaseUser.getIdToken();
+
+                    setToken(jwtToken);
+                    setCustomClaims(decodedToken.claims);
+                    setUser(firebaseUser);
+                } catch (error) {
+                    console.error("Failed to parse Firebase token", error);
+                    // Fallback to setting just the user without claims if network fails
+                    setUser(firebaseUser);
+                    setToken(null);
+                    setCustomClaims(null);
+                }
             } else {
                 setUser(null);
                 setToken(null);
