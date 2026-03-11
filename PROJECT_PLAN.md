@@ -17,7 +17,7 @@ This document serves as the persistent, cross-session source of truth for the AC
 - [x] Build the background webhook/trigger that passes the GCS URI to Gemini 2.5 Flash to extract both the `acord_fields_json` (structured relational data) and `free_form_json` (LLM conversational cache dump) directly into the PostgreSQL `Policy` row.
 - [x] **ADDITION**: Build the Policy Management Interface. Flip upload dropzones to a "Manage" state after successful extraction.
 - [x] **ADDITION**: Build a Side Sheet JSON Field Editor to let humans review and safely edit the AI-extracted `acord_fields_json` before it is used.
-- [ ] **UX ADDITION**: Build a Global Notification Queue for document uploads to allow brokers to navigate seamlessly across pages without cancelling the underlying ingestion `fetch`.
+- [x] **UX ADDITION**: Build a Global Notification Queue for document uploads to allow brokers to navigate seamlessly across pages without cancelling the underlying ingestion `fetch`.
 
 ### 3. ACORD Generation Engine & API [COMPLETED]
 - [x] Complete the API logic that accepts natural language constraints via the "Generate Request" button and stitches the `acord_fields_json` from the database directly into a filled PDF without forcing the AI to re-read the binary file.
@@ -62,5 +62,7 @@ This document serves as the persistent, cross-session source of truth for the AC
     - **Why:** Relying solely on Firebase Custom Claims blobs the JWT tokens and prevents us from doing native SQL `JOIN`s (e.g. joining a User's name to a `COIRequest` record).
     - **Workflow:** When an Admin invites a user, the API automatically generates the Firebase Auth record, grabs the UID, and inserts the profile data into our Postgres `User` table.
 - [x] Update the `cOIRequest` generating logic so that the `requestedBy` column accurately saves the actual user's First & Last Name instead of the generic "Broker Portal Agent" string.
-- [x] Build a SuperAdmin User Management module allowing the SuperAdmin to perform full CRUD on all users across all tenants, easily setting First/Last names, Roles, and assigning `brokerId`s.
 - [x] Build a "Team Settings" view in the Broker Portal, allowing local Broker Admins to invite, manage, and revoke access for their own internal Agents.
+
+### 10. Compliance & System Tracking [PENDING]
+- [ ] Build a System-Wide Audit Log view for `BROKER_ADMIN` roles. This module will track all major system events (logins, document uploads, document deletions, COI generations, field edits, and email dispatches) across all users within their tenant, providing a granular, chronological paper trail of activity.
