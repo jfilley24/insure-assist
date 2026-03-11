@@ -7,6 +7,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 
+import { useJobQueue } from "@/contexts/JobQueueContext";
+
 interface CoiRequestManagerProps {
     clientId: string;
     client: any; // Full client object to get name and policies
@@ -16,30 +18,15 @@ interface CoiRequestManagerProps {
 
 export function CoiRequestManager({ clientId, client, clientEmail, onHistoryRefresh }: CoiRequestManagerProps) {
     const { token } = useAuth();
+    const { enqueueCoiRequest } = useJobQueue();
     const [isDragging, setIsDragging] = useState(false);
-    const [isProcessing, setIsProcessing] = useState(false);
-    const [uploadStep, setUploadStep] = useState<string>("");
     const [error, setError] = useState<string | null>(null);
-    const [elapsedTime, setElapsedTime] = useState(0);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     const [result, setResult] = useState<any>(null); // holds the response from the coi-requests API
     const [isEmailing, setIsEmailing] = useState(false);
     const [emailSuccess, setEmailSuccess] = useState(false);
     const [isDownloading, setIsDownloading] = useState(false);
-
-    // Live timer for the extraction phase
-    useEffect(() => {
-        let interval: NodeJS.Timeout;
-        if (isProcessing) {
-            interval = setInterval(() => {
-                setElapsedTime(prev => prev + 1);
-            }, 1000);
-        } else {
-            setElapsedTime(0);
-        }
-        return () => clearInterval(interval);
-    }, [isProcessing]);
 
     const handleDragOver = (e: React.DragEvent) => { e.preventDefault(); setIsDragging(true); };
     const handleDragLeave = (e: React.DragEvent) => { e.preventDefault(); setIsDragging(false); };
@@ -66,43 +53,16 @@ export function CoiRequestManager({ clientId, client, clientEmail, onHistoryRefr
             return;
         }
 
-        setIsProcessing(true);
-        setUploadStep("Uploading request to secure secure server...");
-
         try {
-            // 1. Get Signed URL
-            const urlRes = await fetch(`/api/clients/${clientId}/signed-url`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-                body: JSON.stringify({ policyType: "REQUEST", contentType: file.type })
-            });
-
-            if (!urlRes.ok) throw new Error(await urlRes.text());
-            const { uploadUrl, gcsUri } = await urlRes.json();
-
-            // 2. Direct PUT to GCS
-            const uploadRes = await fetch(uploadUrl, { method: "PUT", headers: { "Content-Type": file.type }, body: file });
-            if (!uploadRes.ok) throw new Error("Failed to upload to Google Cloud Storage.");
-
-            // 3. Trigger ACORD Generation Backend
-            setUploadStep("Generating COI via AI Engine...");
-            const generateRes = await fetch(`/api/clients/${clientId}/coi-requests`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-                body: JSON.stringify({ gcsUri, source: "PORTAL", requestedBy: "Broker Portal Agent" })
-            });
-
-            if (!generateRes.ok) throw new Error((await generateRes.json()).error || "Generation engine failed.");
-
-            const data = await generateRes.json();
-            setResult(data);
-            if (onHistoryRefresh) onHistoryRefresh();
-
+            // Push job to global queue
+            enqueueCoiRequest(file, clientId, token, client?.name || "Client");
+            
+            // Optionally, we could show a success message here, but the queue will handle it.
+            // if (onHistoryRefresh) onHistoryRefresh();
         } catch (err: any) {
             console.error(err);
             setError(err.message || "An unexpected error occurred.");
         } finally {
-            setIsProcessing(false);
             if (fileInputRef.current) fileInputRef.current.value = "";
         }
     };
@@ -314,32 +274,19 @@ export function CoiRequestManager({ clientId, client, clientEmail, onHistoryRefr
                     onDragOver={handleDragOver}
                     onDragLeave={handleDragLeave}
                     onDrop={handleDrop}
-                    onClick={() => { if (!isProcessing && fileInputRef.current) fileInputRef.current.click(); }}
+                    onClick={() => { if (fileInputRef.current) fileInputRef.current.click(); }}
                 >
                     <input type="file" ref={fileInputRef} className="hidden" accept="application/pdf" onChange={handleFileSelect} />
 
-                    {isProcessing ? (
-                        <div className="flex flex-col items-center text-blue-600">
-                            <Loader2 className="w-10 h-10 mb-3 animate-spin text-blue-500" />
-                            <span className="font-semibold text-base text-blue-900">{uploadStep}</span>
-                            <span className="text-xs text-blue-500 mt-2 font-mono">
-                                Step elapsed: {Math.floor(elapsedTime / 60)}:{(elapsedTime % 60).toString().padStart(2, '0')}
-                            </span>
-                            <p className="text-xs text-blue-600/70 mt-2 max-w-xs text-center">
-                                Analyzing complex policy requirements across multiple agents usually takes 1-2 minutes.
-                            </p>
+                    <div className="flex flex-col items-center cursor-pointer">
+                        <div className="bg-slate-100 p-4 rounded-full shadow-sm mb-4">
+                            <FileText className="w-8 h-8 text-blue-600" />
                         </div>
-                    ) : (
-                        <div className="flex flex-col items-center cursor-pointer">
-                            <div className="bg-slate-100 p-4 rounded-full shadow-sm mb-4">
-                                <FileText className="w-8 h-8 text-blue-600" />
-                            </div>
-                            <h3 className="text-xl font-bold text-slate-800 mb-1">Click or drag Request PDF to upload</h3>
-                            <p className="text-sm text-slate-500 max-w-sm">
-                                Supported formats: Standard PDF
-                            </p>
-                        </div>
-                    )}
+                        <h3 className="text-xl font-bold text-slate-800 mb-1">Click or drag Request PDF to upload</h3>
+                        <p className="text-sm text-slate-500 max-w-sm">
+                            Supported formats: Standard PDF. Processing runs in the background.
+                        </p>
+                    </div>
                 </div>
                 {error && (
                     <div className="mt-4 p-3 bg-red-50 border border-red-200 text-red-700 rounded-md text-sm font-medium">

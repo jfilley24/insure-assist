@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
+import { NotificationCenter } from "@/components/layout/NotificationCenter";
 import {
     LayoutDashboard,
     CopyPlus,
@@ -36,9 +37,12 @@ export function Sidebar() {
                     <Shield className="h-6 w-6 text-blue-600" />
                     <span className="font-bold text-slate-900 tracking-tight">Insure Assist AI</span>
                 </div>
-                <Button variant="ghost" size="icon" onClick={() => setIsMobileOpen(!isMobileOpen)}>
-                    {isMobileOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
-                </Button>
+                <div className="flex items-center gap-1">
+                    <NotificationCenter />
+                    <Button variant="ghost" size="icon" onClick={() => setIsMobileOpen(!isMobileOpen)}>
+                        {isMobileOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+                    </Button>
+                </div>
             </div>
 
             {/* Sidebar Container */}
@@ -49,12 +53,15 @@ export function Sidebar() {
                     ${isMobileOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
                 `}
             >
-                <div className="p-6 border-b border-slate-100 hidden md:flex items-center gap-2">
-                    <Shield className="h-6 w-6 text-blue-600" />
-                    <div>
-                        <h2 className="text-xl font-bold text-slate-900 tracking-tight leading-none">Insure Assist AI</h2>
-                        <p className="text-[10px] text-slate-500 font-bold mt-1 tracking-wider uppercase">Broker Portal</p>
+                <div className="p-4 border-b border-slate-100 hidden md:flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                        <Shield className="h-6 w-6 text-blue-600" />
+                        <div>
+                            <h2 className="text-lg font-bold text-slate-900 tracking-tight leading-none">Insure Assist AI</h2>
+                            <p className="text-[10px] text-slate-500 font-bold mt-1 tracking-wider uppercase">Broker Portal</p>
+                        </div>
                     </div>
+                    <NotificationCenter />
                 </div>
 
                 <nav className="flex-1 p-4 space-y-2 mt-16 md:mt-0 overflow-y-auto">

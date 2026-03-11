@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -14,7 +14,10 @@ import { ClientHistoryTab } from "./ClientHistoryTab";
 export default function ClientDetailPage() {
     const params = useParams();
     const router = useRouter();
+    const searchParams = useSearchParams();
     const { token } = useAuth();
+    
+    const defaultTab = searchParams.get("tab") || "requests";
 
     // State
     const [client, setClient] = useState<any>(null);
@@ -86,7 +89,7 @@ export default function ClientDetailPage() {
                 </div>
             </div>
 
-            <Tabs defaultValue="requests" className="w-full">
+            <Tabs defaultValue={defaultTab} className="w-full">
                 {/* Clean underline style tabs */}
                 <TabsList variant="line" className="w-full justify-start h-auto p-0 border-b border-slate-200 mb-6 gap-6">
                     <TabsTrigger value="requests" className="px-1 py-3 text-base data-[state=active]:text-blue-600 data-[state=active]:after:bg-blue-600">
@@ -204,17 +207,11 @@ export default function ClientDetailPage() {
                     />
 
                     <Card>
-                        <CardHeader>
-                            <CardTitle className="text-lg">Communication History</CardTitle>
-                            <CardDescription>Log of all generated ACORD COI Requests and dispatched emails for this client.</CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                            <ClientHistoryTab
-                                clientId={client.id}
-                                clientName={client.name}
-                                clientEmail={client.primaryEmail || (client.authorizedDomains?.[0] ? `contact@${client.authorizedDomains[0]}` : undefined)}
-                            />
-                        </CardContent>
+                        <ClientHistoryTab
+                            clientId={client.id}
+                            clientName={client.name}
+                            clientEmail={client.primaryEmail || (client.authorizedDomains?.[0] ? `contact@${client.authorizedDomains[0]}` : undefined)}
+                        />
                     </Card>
                 </TabsContent>
             </Tabs>
