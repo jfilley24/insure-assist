@@ -62,7 +62,47 @@ If a developer merges code into `development` and edited files inside `broker-po
 * If their schema contracts fall out of sync, the live website will crash.
 * Both folders must share a single `paths` trigger in their GitHub Actions deployment file.
 
-## 4. Summary Checklist for a Code Change
+## 4. Your Daily Commands Cheat Sheet
+
+You can type these commands into your terminal, or you can just ask me (your AI agent) things like: *"Save my work for the day"* or *"Deploy my branch to dev"*.
+
+### Goal 1: Save basic edits locally (Mid-day)
+*When you just want to take a snapshot of your work on your personal branch without sending it anywhere.*
+```bash
+git add .
+git commit -m "wip: working on the new UI"
+```
+
+### Goal 2: Check in code to your branch (End of day)
+*When you are logging off and want your work safely backed up to the cloud (GitHub).*
+```bash
+git add .
+git commit -m "feat: finished building the login page"
+git push origin <your-branch-name>
+```
+
+### Goal 3: Deploy to Development (Staging)
+*When your feature is totally done and you want to test it on the live cloud server.*
+```bash
+# 1. Push your final code to your branch
+git push origin <your-branch-name>
+
+# 2. Go to GitHub.com and click "New Pull Request" -> into 'development'.
+# 3. Wait for the automated tests to pass (Green Checkmark).
+# 4. Click the "Merge" button.
+# 5. Done! The Cloud Run deployment starts automatically.
+```
+
+### Goal 4: Deploy to Production (Live Customers)
+*When the team agrees the code in Development is perfect and ready for the world.*
+```bash
+# 1. Go to GitHub.com.
+# 2. Open a Pull Request from 'development' into 'production'.
+# 3. Click the "Merge" button.
+# 4. Done! The Cloud Run production deployment starts automatically.
+```
+
+## 5. Summary Checklist for a Code Change
 1. `git checkout development`
 2. `git pull`
 3. `git checkout -b feature/my-cool-update`
