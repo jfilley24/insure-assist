@@ -184,35 +184,6 @@ Please output the FULL, COMPLETE JSON schema again with your corrections applied
                                     let parsedJSON;
                                     try {
                                         parsedJSON = JSON.parse(cleanJsonString(structuredText));
-                                        
-                                        // Fallback: If NAIC Code wasn't explicitly in the document, search Google for it using the extracted Insurer Name
-                                        if (parsedJSON.insurer_name && !parsedJSON.naic_code) {
-                                            try {
-                                                sendEvent({ update: `Searching for NAIC code for ${parsedJSON.insurer_name}...` });
-                                                const searchModel = vertexAI.preview.getGenerativeModel({
-                                                    model: model,
-                                                    tools: [{ googleSearch: {} } as any]
-                                                });
-                                                const searchPrompt = `Use Google Search to find the primary Property and Casualty 5-digit NAIC code for the insurance carrier: "${parsedJSON.insurer_name}". 
-If they have multiple subsidiaries, provide the main or most common NAIC code for Property and Casualty insurance, avoiding niche subsidiaries like Marine.
-
-You MAY write out your reasoning, thought process, and search results. But you MUST wrap your final 5-digit NAIC code in XML tags like this: <naic>12345</naic>. If you cannot find a 5-digit NAIC code, output <naic>null</naic>.`;
-                                                const searchResult = await searchModel.generateContent(searchPrompt);
-                                                const searchCodeText = searchResult.response.candidates?.[0]?.content.parts?.[0]?.text?.trim() || "";
-                                                console.log("\n--- NAIC SEARCH REASONING ---\n", searchCodeText, "\n-----------------------------\n");
-                                                
-                                                const naicMatch = searchCodeText.match(/<naic>(\d{5})<\/naic>/i);
-                                                if (naicMatch) {
-                                                    parsedJSON.naic_code = naicMatch[1];
-                                                    sendEvent({ update: `Found NAIC code: ${naicMatch[1]}` });
-                                                } else {
-                                                    sendEvent({ update: `NAIC code not found via search for ${parsedJSON.insurer_name}.\nSearch details: ${searchCodeText.substring(0, 100)}...` });
-                                                }
-                                            } catch (searchError) {
-                                                console.warn("Failed to lookup NAIC code via Google Search:", searchError);
-                                                sendEvent({ update: `Failed to search for NAIC code: ${(searchError as Error).message}` });
-                                            }
-                                        }
                                         keyFieldsJson = JSON.stringify(parsedJSON);
                                     } catch (e) {
                                         console.error("Failed to parse JSON after critic pass:", structuredText);
@@ -226,6 +197,43 @@ You MAY write out your reasoning, thought process, and search results. But you M
                             } catch (e) {
                                 console.error("Failed to execute Phase 1.5 Critic Pass", e);
                                 // We silently swallow this and just use the Phase 1 keyFieldsJson
+                            }
+                        }
+
+                        // --- PHASE 1.7: NAIC GOOGLE SEARCH FALLBACK ---
+                        if (keyFieldsJson) {
+                            try {
+                                const parsedFinal = JSON.parse(keyFieldsJson);
+                                if (parsedFinal.insurer_name && !parsedFinal.naic_code) {
+                                    try {
+                                        sendEvent({ update: `Searching for NAIC code for ${parsedFinal.insurer_name}...` });
+                                        const searchModel = vertexAI.preview.getGenerativeModel({
+                                            model: model,
+                                            tools: [{ googleSearch: {} } as any]
+                                        });
+                                        const searchPrompt = `Use Google Search to find the primary Property and Casualty 5-digit NAIC code for the insurance carrier: "${parsedFinal.insurer_name}". 
+If they have multiple subsidiaries, provide the main or most common NAIC code for Property and Casualty insurance, avoiding niche subsidiaries like Marine.
+
+You MAY write out your reasoning, thought process, and search results. But you MUST wrap your final 5-digit NAIC code in XML tags like this: <naic>12345</naic>. If you cannot find a 5-digit NAIC code, output <naic>null</naic>.`;
+                                        const searchResult = await searchModel.generateContent(searchPrompt);
+                                        const searchCodeText = searchResult.response.candidates?.[0]?.content.parts?.[0]?.text?.trim() || "";
+                                        console.log("\n--- NAIC SEARCH REASONING ---\n", searchCodeText, "\n-----------------------------\n");
+                                        
+                                        const naicMatch = searchCodeText.match(/<naic>(\d{5})<\/naic>/i);
+                                        if (naicMatch) {
+                                            parsedFinal.naic_code = naicMatch[1];
+                                            sendEvent({ update: `Found NAIC code: ${naicMatch[1]}` });
+                                            keyFieldsJson = JSON.stringify(parsedFinal);
+                                        } else {
+                                            sendEvent({ update: `NAIC code not found via search for ${parsedFinal.insurer_name}.\nSearch details: ${searchCodeText.substring(0, 100)}...` });
+                                        }
+                                    } catch (searchError) {
+                                        console.warn("Failed to lookup NAIC code via Google Search:", searchError);
+                                        sendEvent({ update: `Failed to search for NAIC code: ${(searchError as Error).message}` });
+                                    }
+                                }
+                            } catch(e) {
+                                console.error("Error in NAIC fallback search:", e);
                             }
                         }
 

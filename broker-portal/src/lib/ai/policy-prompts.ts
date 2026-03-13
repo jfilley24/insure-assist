@@ -1,4 +1,21 @@
-import { SchemaType, Schema } from "@google-cloud/vertexai";
+export enum SchemaType {
+  STRING = "STRING",
+  NUMBER = "NUMBER",
+  INTEGER = "INTEGER",
+  BOOLEAN = "BOOLEAN",
+  ARRAY = "ARRAY",
+  OBJECT = "OBJECT",
+}
+
+export interface Schema {
+  type: SchemaType;
+  format?: string;
+  description?: string;
+  nullable?: boolean;
+  enum?: string[];
+  properties?: { [k: string]: Schema };
+  items?: Schema;
+}
 
 
 export const Prompts: Record<string, string> = {
@@ -48,7 +65,7 @@ export const Schemas: Record<string, Schema> = {
     AUTO: {
         type: SchemaType.OBJECT,
         properties: {
-            is_matching_policy_type: { type: SchemaType.BOOLEAN, description: "True if the document is actually an Auto policy. False if it is a different insurance type." },
+            is_matching_policy_type: { type: SchemaType.BOOLEAN, description: "True if the document is actually an Auto policy. False if it is a completely different insurance type like GL or Workers Comp." },
             insurer_name: { type: SchemaType.STRING, description: "REQUIRED: Name of the Insurance Company." },
             naic_code: { type: SchemaType.STRING, nullable: true },
             policy_number: { type: SchemaType.STRING, description: "REQUIRED: The policy number." },
@@ -68,7 +85,7 @@ export const Schemas: Record<string, Schema> = {
     GL: {
         type: SchemaType.OBJECT,
         properties: {
-            is_matching_policy_type: { type: SchemaType.BOOLEAN, description: "True if the document is actually a General Liability policy. False if it is a different insurance type.", nullable: false },
+            is_matching_policy_type: { type: SchemaType.BOOLEAN, description: "True if the document is actually a General Liability policy. False if it is a completely different insurance type like Auto or Workers Comp.", nullable: false },
             insurer_name: { type: SchemaType.STRING, description: "REQUIRED: Name of the Insurance Company." },
             naic_code: { type: SchemaType.STRING, nullable: true },
             policy_number: { type: SchemaType.STRING, description: "REQUIRED: The policy number." },
@@ -89,7 +106,7 @@ export const Schemas: Record<string, Schema> = {
     WC: {
         type: SchemaType.OBJECT,
         properties: {
-            is_matching_policy_type: { type: SchemaType.BOOLEAN, description: "True if the document is actually a Workers Compensation policy. False if it is a different insurance type.", nullable: false },
+            is_matching_policy_type: { type: SchemaType.BOOLEAN, description: "True if the document is actually a Workers Compensation policy. False if it is a completely different insurance type like Auto or GL.", nullable: false },
             insurer_name: { type: SchemaType.STRING, description: "REQUIRED: Name of the Insurance Company." },
             naic_code: { type: SchemaType.STRING, nullable: true },
             policy_number: { type: SchemaType.STRING, description: "REQUIRED: The policy number." },
@@ -105,7 +122,7 @@ export const Schemas: Record<string, Schema> = {
     UMBRELLA: {
         type: SchemaType.OBJECT,
         properties: {
-            is_matching_policy_type: { type: SchemaType.BOOLEAN, description: "True if the document is actually an Umbrella policy. False if it is a different insurance type.", nullable: false },
+            is_matching_policy_type: { type: SchemaType.BOOLEAN, description: "True if the document is an Umbrella OR Excess Liability policy. False if it is a completely different insurance type like Auto or Workers Comp.", nullable: false },
             insurer_name: { type: SchemaType.STRING, description: "REQUIRED: Name of the Insurance Company." },
             naic_code: { type: SchemaType.STRING, nullable: true },
             policy_number: { type: SchemaType.STRING, description: "REQUIRED: The policy number." },

@@ -5,7 +5,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Download, CheckCircle2, AlertTriangle, Clock, Mail, RefreshCw, Loader2 } from "lucide-react";
+import { Download, CheckCircle2, AlertTriangle, Clock, Mail, RefreshCw, Loader2, Eye } from "lucide-react";
 
 interface ClientHistoryTabProps {
     clientId: string;
@@ -19,6 +19,7 @@ export function ClientHistoryTab({ clientId, clientEmail, clientName }: ClientHi
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [downloadingId, setDownloadingId] = useState<string | null>(null);
+    const [viewingId, setViewingId] = useState<string | null>(null);
 
     const [currentPage, setCurrentPage] = useState(1);
     const ITEMS_PER_PAGE = 5;
@@ -84,6 +85,44 @@ export function ClientHistoryTab({ clientId, clientEmail, clientName }: ClientHi
         }
     };
 
+    const handleView = async (id: string) => {
+        if (!token) return;
+        setViewingId(id);
+        try {
+            const res = await fetch(`/api/coi-requests/${id}/download`, {
+                headers: { Authorization: `Bearer ${token}` },
+            });
+            if (!res.ok) {
+                let errMsg = "Failed to fetch file for viewing";
+                try {
+                    const errData = await res.json();
+                    errMsg = errData.error || errMsg;
+                } catch {
+                    errMsg = await res.text() || errMsg;
+                }
+                throw new Error(errMsg);
+            }
+
+            const blob = await res.blob();
+            const blobFile = new Blob([blob], { type: "application/pdf" });
+            const previewUrl = window.URL.createObjectURL(blobFile);
+
+            const a = document.createElement('a');
+            a.href = previewUrl;
+            a.target = '_blank';
+            a.rel = 'noopener noreferrer';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            
+            setTimeout(() => window.URL.revokeObjectURL(previewUrl), 1000);
+        } catch (err: any) {
+            alert(err.message || "Failed to view file");
+        } finally {
+            setViewingId(null);
+        }
+    };
+
     const totalPages = Math.ceil(history.length / ITEMS_PER_PAGE);
     const paginatedHistory = history.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
 
@@ -136,23 +175,38 @@ export function ClientHistoryTab({ clientId, clientEmail, clientName }: ClientHi
                                         </div>
                                         <div className="flex gap-2">
                                             {req.generatedPdfUri && (
-                                                <Button
-                                                    size="sm"
-                                                    variant="outline"
-                                                    onClick={() => {
-                                                        const formattedName = clientName?.replace(/[^a-zA-Z0-9]/g, '_') || 'Client';
-                                                        const reqDate = new Date(req.createdAt).toISOString().split('T')[0];
-                                                        handleDownload(req.id, `${formattedName}_COI_${reqDate}.pdf`);
-                                                    }}
-                                                    disabled={downloadingId === req.id}
-                                                >
-                                                    {downloadingId === req.id ? (
-                                                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                                                    ) : (
-                                                        <Download className="w-4 h-4 mr-2" />
-                                                    )}
-                                                    Download Document
-                                                </Button>
+                                                <>
+                                                    <Button
+                                                        size="sm"
+                                                        variant="outline"
+                                                        onClick={() => handleView(req.id)}
+                                                        disabled={viewingId === req.id}
+                                                    >
+                                                        {viewingId === req.id ? (
+                                                            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                                        ) : (
+                                                            <Eye className="w-4 h-4 mr-2" />
+                                                        )}
+                                                        View
+                                                    </Button>
+                                                    <Button
+                                                        size="sm"
+                                                        variant="outline"
+                                                        onClick={() => {
+                                                            const formattedName = clientName?.replace(/[^a-zA-Z0-9]/g, '_') || 'Client';
+                                                            const reqDate = new Date(req.createdAt).toISOString().split('T')[0];
+                                                            handleDownload(req.id, `${formattedName}_COI_${reqDate}.pdf`);
+                                                        }}
+                                                        disabled={downloadingId === req.id}
+                                                    >
+                                                        {downloadingId === req.id ? (
+                                                            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                                        ) : (
+                                                            <Download className="w-4 h-4 mr-2" />
+                                                        )}
+                                                        Download
+                                                    </Button>
+                                                </>
                                             )}
                                         </div>
                                     </CardHeader>

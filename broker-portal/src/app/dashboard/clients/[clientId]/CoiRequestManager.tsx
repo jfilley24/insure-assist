@@ -513,7 +513,7 @@ export function CoiRequestManager({ clientId, client, clientEmail, onHistoryRefr
                                 className="w-full mt-4" 
                                 disabled={!manualCertHolder.trim() || isBlocked}
                             >
-                                Generate COI Note
+                                Generate COI
                             </Button>
                         </div>
                     </TabsContent>

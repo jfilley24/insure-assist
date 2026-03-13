@@ -91,14 +91,21 @@ async def generate_coi(
             # If we already assigned a letter to this insurer, reuse it
             for letter, info in insurers.items():
                 if info['name'].lower() == name.lower():
+                    # If this policy has an NAIC code but the current dictionary entry does not, update it
+                    new_naic = str(getattr(policy_details, 'naic_code', '') or '').strip()
+                    if new_naic and new_naic != "N/A (Confirmed)" and not info.get('naic'):
+                        info['naic'] = new_naic
                     return letter
                     
             # Assign new letter if available
             if current_letter_idx < len(target_letters):
                 letter = target_letters[current_letter_idx]
+                new_naic = str(getattr(policy_details, 'naic_code', '') or '').strip()
+                if new_naic == "N/A (Confirmed)":
+                    new_naic = ""
                 insurers[letter] = {
                     'name': name,
-                    'naic': getattr(policy_details, 'naic_code', '') or ''
+                    'naic': new_naic
                 }
                 current_letter_idx += 1
                 return letter
@@ -383,13 +390,20 @@ async def generate_coi_manual(
                 
             for letter, info in insurers.items():
                 if info['name'].lower() == name.lower():
+                    # If this policy has an NAIC code but the current dictionary entry does not, update it
+                    new_naic = str(getattr(policy_details, 'naic_code', '') or '').strip()
+                    if new_naic and new_naic != "N/A (Confirmed)" and not info.get('naic'):
+                        info['naic'] = new_naic
                     return letter
                     
             if current_letter_idx < len(target_letters):
                 letter = target_letters[current_letter_idx]
+                new_naic = str(getattr(policy_details, 'naic_code', '') or '').strip()
+                if new_naic == "N/A (Confirmed)":
+                    new_naic = ""
                 insurers[letter] = {
                     'name': name,
-                    'naic': getattr(policy_details, 'naic_code', '') or ''
+                    'naic': new_naic
                 }
                 current_letter_idx += 1
                 return letter

@@ -16,6 +16,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from "@/contexts/AuthContext";
+import { Schemas } from "@/lib/ai/policy-prompts";
 
 interface PolicyManagerProps {
     policyType: "AUTO" | "GL" | "WC" | "UMBRELLA";
@@ -223,6 +224,7 @@ export function PolicyManager({ policyType, clientId, existingPolicy, onRefresh 
                 isOpen={isSheetOpen}
                 onClose={() => setIsSheetOpen(false)}
                 policy={existingPolicy}
+                policyType={policyType}
                 onRefresh={onRefresh}
             />
         </div>
@@ -230,23 +232,36 @@ export function PolicyManager({ policyType, clientId, existingPolicy, onRefresh 
 }
 
 // Internal Sheet Component for Edit Logic
-function PolicyEditorSheet({ isOpen, onClose, policy, onRefresh }: { isOpen: boolean, onClose: () => void, policy: any, onRefresh: () => void }) {
+function PolicyEditorSheet({ isOpen, onClose, policy, policyType, onRefresh }: { isOpen: boolean, onClose: () => void, policy: any, policyType: string, onRefresh: () => void }) {
     const { token } = useAuth();
     const [isSaving, setIsSaving] = useState(false);
 
     // Safely parse LLM JSON which might occasionally include markdown blocks
     const parseAIJson = (raw: string | null | undefined) => {
-        if (!raw) return {};
-        try {
-            let clean = raw.trim();
-            if (clean.startsWith('```')) {
-                clean = clean.replace(/^```(json)?\n?/i, '').replace(/\n?```$/i, '').trim();
+        let parsed: Record<string, any> = {};
+        if (raw) {
+            try {
+                let clean = raw.trim();
+                if (clean.startsWith('```')) {
+                    clean = clean.replace(/^```(json)?\n?/i, '').replace(/\n?```$/i, '').trim();
+                }
+                parsed = JSON.parse(clean);
+            } catch (err) {
+                console.error("Failed to parse AI JSON:", err);
             }
-            return JSON.parse(clean);
-        } catch (err) {
-            console.error("Failed to parse AI JSON:", err);
-            return {};
         }
+        
+        // Ensure all schema properties exist in the parsed object so the UI loops over them
+        const schemaDef = Schemas[policyType];
+        if (schemaDef && schemaDef.properties) {
+            Object.keys(schemaDef.properties).forEach(key => {
+                if (!(key in parsed)) {
+                    parsed[key] = null;
+                }
+            });
+        }
+        
+        return parsed;
     };
 
     const [formData, setFormData] = useState<Record<string, any>>(() => parseAIJson(policy?.acord_fields_json));

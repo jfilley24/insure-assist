@@ -47,8 +47,9 @@ This document serves as the persistent, cross-session source of truth for the AC
 - [x] Build "Top Cards & Analytics" with metrics counting total clients, active policies, etc.
 - [x] Add interactive Line Graph with Recharts trailing 30 days of COI requests.
 
-### 7. Automated Quality Assurance [DEFERRED]
-- [ ] Install and configure `pytest` for the FastAPI Python backend to mock PDF generation workflows without burning Gemini API credits.
+### 7. Automated Quality Assurance [PARTIALLY COMPLETED]
+- [x] Build automated "PDF Regression Tests" via a GitHub Actions CI pipeline (`pr-checks.yml`) that mocks API behavior and verifies deterministic PDF generation without burning Gemini API credits.
+- [x] Configure standard Git Workflow requiring Pull Requests to `development` to strictly gate deployments behind passing CI tests.
 - [ ] Install and configure `Playwright` to run End-to-End browser UI tests on Next.js to mathematically guarantee regressions do not break core portal functionality.
 - [ ] Configure Git `husky` Pre-commit Hooks to block failing commits from reaching production.
 
