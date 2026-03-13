@@ -1,0 +1,87 @@
+﻿Verifying PDF: ..\broker-portal\scripts\regression_output_ALL_TRUE_FLAGS.pdf against ..\broker-portal\scripts\expected_ALL_TRUE_FLAGS.json
+{
+  "F[0].P1[0].Producer_FullName_A[0]": "Regression Test Broker LLC",
+  "F[0].P1[0].Producer_MailingAddress_LineOne_A[0]": "100 Regression Way",
+  "F[0].P1[0].Producer_MailingAddress_CityName_A[0]": "Testville",
+  "F[0].P1[0].Producer_MailingAddress_StateOrProvinceCode_A[0]": "TX",
+  "F[0].P1[0].Producer_MailingAddress_PostalCode_A[0]": "75001",
+  "F[0].P1[0].Producer_ContactPerson_PhoneNumber_A[0]": "555-0199",
+  "F[0].P1[0].NamedInsured_FullName_A[0]": "Test Client 1 Corporation",
+  "F[0].P1[0].NamedInsured_MailingAddress_LineOne_A[0]": "200 Client Street",
+  "F[0].P1[0].NamedInsured_MailingAddress_CityName_A[0]": "Clientburg",
+  "F[0].P1[0].NamedInsured_MailingAddress_StateOrProvinceCode_A[0]": "CA",
+  "F[0].P1[0].NamedInsured_MailingAddress_PostalCode_A[0]": "90210",
+  "F[0].P1[0].Insurer_FullName_A[0]": "Auto Insurer Corp",
+  "F[0].P1[0].Insurer_NAICCode_A[0]": "11111",
+  "F[0].P1[0].Insurer_FullName_B[0]": "GL Insurer LLC",
+  "F[0].P1[0].Insurer_NAICCode_B[0]": "22222",
+  "F[0].P1[0].Insurer_FullName_C[0]": "Umbrella Insurer Inc",
+  "F[0].P1[0].Insurer_NAICCode_C[0]": "33333",
+  "F[0].P1[0].Insurer_FullName_D[0]": "WC Insurer Co",
+  "F[0].P1[0].Insurer_NAICCode_D[0]": "44444",
+  "F[0].P1[0].GeneralLiability_InsurerLetterCode_A[0]": "B",
+  "F[0].P1[0].GeneralLiability_CoverageIndicator_A[0]": "/1",
+  "F[0].P1[0].GeneralLiability_ClaimsMadeIndicator_A[0]": "/Off",
+  "F[0].P1[0].GeneralLiability_OccurrenceIndicator_A[0]": "/1",
+  "F[0].P1[0].CertificateOfInsurance_GeneralLiability_AdditionalInsuredCode_A[0]": "X",
+  "F[0].P1[0].Policy_GeneralLiability_SubrogationWaivedCode_A[0]": "X",
+  "F[0].P1[0].Policy_GeneralLiability_PolicyNumberIdentifier_A[0]": "GL-8888",
+  "F[0].P1[0].Policy_GeneralLiability_EffectiveDate_A[0]": "02/01/2026",
+  "F[0].P1[0].Policy_GeneralLiability_ExpirationDate_A[0]": "02/01/2027",
+  "F[0].P1[0].GeneralLiability_EachOccurrence_LimitAmount_A[0]": "2000000",
+  "F[0].P1[0].GeneralLiability_FireDamageRentedPremises_EachOccurrenceLimitAmount_A[0]": "300000",
+  "F[0].P1[0].GeneralLiability_MedicalExpense_EachPersonLimitAmount_A[0]": "15000",
+  "F[0].P1[0].GeneralLiability_PersonalAndAdvertisingInjury_LimitAmount_A[0]": "2000000",
+  "F[0].P1[0].GeneralLiability_GeneralAggregate_LimitAmount_A[0]": "4000000",
+  "F[0].P1[0].GeneralLiability_ProductsAndCompletedOperations_AggregateLimitAmount_A[0]": "4000000",
+  "F[0].P1[0].Vehicle_InsurerLetterCode_A[0]": "A",
+  "F[0].P1[0].Vehicle_AnyAutoIndicator_A[0]": "/1",
+  "F[0].P1[0].Vehicle_AllOwnedAutosIndicator_A[0]": "/1",
+  "F[0].P1[0].Vehicle_HiredAutosIndicator_A[0]": "/1",
+  "F[0].P1[0].Vehicle_ScheduledAutosIndicator_A[0]": "/1",
+  "F[0].P1[0].Vehicle_NonOwnedAutosIndicator_A[0]": "/1",
+  "F[0].P1[0].Policy_AutomobileLiability_PolicyNumberIdentifier_A[0]": "AUTO-9999",
+  "F[0].P1[0].Policy_AutomobileLiability_EffectiveDate_A[0]": "01/01/2026",
+  "F[0].P1[0].Policy_AutomobileLiability_ExpirationDate_A[0]": "01/01/2027",
+  "F[0].P1[0].Vehicle_CombinedSingleLimit_EachAccidentAmount_A[0]": "1000000",
+  "F[0].P1[0].Vehicle_BodilyInjury_PerPersonLimitAmount_A[0]": "250000",
+  "F[0].P1[0].Vehicle_BodilyInjury_PerAccidentLimitAmount_A[0]": "500000",
+  "F[0].P1[0].Vehicle_PropertyDamage_PerAccidentLimitAmount_A[0]": "100000",
+  "F[0].P1[0].ExcessUmbrella_InsurerLetterCode_A[0]": "C",
+  "F[0].P1[0].Policy_PolicyType_UmbrellaIndicator_A[0]": "/1",
+  "F[0].P1[0].ExcessUmbrella_OccurrenceIndicator_A[0]": "/1",
+  "F[0].P1[0].ExcessUmbrella_Umbrella_DeductibleOrRetentionAmount_A[0]": "10000",
+  "F[0].P1[0].Policy_ExcessLiability_PolicyNumberIdentifier_A[0]": "UMB-7777",
+  "F[0].P1[0].Policy_ExcessLiability_EffectiveDate_A[0]": "03/01/2026",
+  "F[0].P1[0].Policy_ExcessLiability_ExpirationDate_A[0]": "03/01/2027",
+  "F[0].P1[0].ExcessUmbrella_Umbrella_EachOccurrenceAmount_A[0]": "5000000",
+  "F[0].P1[0].ExcessUmbrella_Umbrella_AggregateAmount_A[0]": "5000000",
+  "F[0].P1[0].WorkersCompensationEmployersLiability_InsurerLetterCode_A[0]": "D",
+  "F[0].P1[0].WorkersCompensationEmployersLiability_AnyPersonsExcludedIndicator_A[0]": "Y",
+  "F[0].P1[0].Policy_WorkersCompensation_SubrogationWaivedCode_A[0]": "X",
+  "F[0].P1[0].Policy_WorkersCompensationAndEmployersLiability_PolicyNumberIdentifier_A[0]": "WC-6666",
+  "F[0].P1[0].Policy_WorkersCompensationAndEmployersLiability_EffectiveDate_A[0]": "04/01/2026",
+  "F[0].P1[0].Policy_WorkersCompensationAndEmployersLiability_ExpirationDate_A[0]": "04/01/2027",
+  "F[0].P1[0].WorkersCompensationEmployersLiability_EmployersLiability_EachAccidentLimitAmount_A[0]": "1000000",
+  "F[0].P1[0].WorkersCompensationEmployersLiability_EmployersLiability_DiseaseEachEmployeeLimitAmount_A[0]": "1000000",
+  "F[0].P1[0].WorkersCompensationEmployersLiability_EmployersLiability_DiseasePolicyLimitAmount_A[0]": "1000000",
+  "F[0].P1[0].CertificateOfLiabilityInsurance_ACORDForm_RemarkText_A[0]": "Regression Description Of Operations block text.",
+  "F[0].P1[0].CertificateHolder_FullName_A[0]": "Regression Certificate Holder"
+}
+  [FAIL] Value Mismatch for field 'F[0].P1[0].CertificateOfInsurance_AutomobileLiability_AdditionalInsuredCode_A[0]'
+   Expected: 'Y'
+   Actual:   None
+  [FAIL] Value Mismatch for field 'F[0].P1[0].Policy_AutomobileLiability_SubrogationWaivedCode_A[0]'
+   Expected: 'Y'
+   Actual:   None
+  [FAIL] Value Mismatch for field 'F[0].P1[0].CertificateOfInsurance_GeneralLiability_AdditionalInsuredCode_A[0]'
+   Expected: 'Y'
+   Actual:   'X'
+  [FAIL] Value Mismatch for field 'F[0].P1[0].Policy_GeneralLiability_SubrogationWaivedCode_A[0]'
+   Expected: 'Y'
+   Actual:   'X'
+  [FAIL] Value Mismatch for field 'F[0].P1[0].Policy_WorkersCompensation_SubrogationWaivedCode_A[0]'
+   Expected: 'Y'
+   Actual:   'X'
+
+[FAIL] REGRESSION TEST FAILED! Missing or incorrect fields found.
