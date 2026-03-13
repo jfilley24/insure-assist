@@ -63,6 +63,9 @@ This document serves as the persistent, cross-session source of truth for the AC
     - **Workflow:** When an Admin invites a user, the API automatically generates the Firebase Auth record, grabs the UID, and inserts the profile data into our Postgres `User` table.
 - [x] Update the `cOIRequest` generating logic so that the `requestedBy` column accurately saves the actual user's First & Last Name instead of the generic "Broker Portal Agent" string.
 - [x] Build a "Team Settings" view in the Broker Portal, allowing local Broker Admins to invite, manage, and revoke access for their own internal Agents.
+- [x] **ADDITION**: Implement `agentId` mapping and RBAC controls for the Dashboard. Agents only see their assigned Clients and their metrics, while Broker Admins maintain a unified tenant-wide view.
+- [x] **ADDITION**: Dynamically control Client UI creation and deletion functions, preventing assigned Agents from modifying or deleting root client structures.
+- [x] **ADDITION**: Auto-assign newly created clients to the initiating Agent. Provide a dropdown selector for Broker Admins to explicitly allocate a Client to a specific system Agent.
 
 ### 10. Compliance & System Tracking [PENDING]
 - [ ] Build a System-Wide Audit Log view for `BROKER_ADMIN` roles. This module will track all major system events (logins, document uploads, document deletions, COI generations, field edits, and email dispatches) across all users within their tenant, providing a granular, chronological paper trail of activity.

@@ -22,5 +22,7 @@
   "F[0].P1[0].ExcessUmbrella_OccurrenceIndicator_A[0]": "",
   "F[0].P1[0].ExcessUmbrella_ClaimsMadeIndicator_A[0]": "/1",
   "F[0].P1[0].WorkersCompensationEmployersLiability_AnyPersonsExcludedIndicator_A[0]": "N",
-  "F[0].P1[0].Policy_WorkersCompensation_SubrogationWaivedCode_A[0]": ""
+  "F[0].P1[0].Policy_WorkersCompensation_SubrogationWaivedCode_A[0]": "",
+  "F[0].P1[0].Producer_ContactPerson_FullName_A[0]": "Regression Agent Name",
+  "F[0].P1[0].Producer_ContactPerson_EmailAddress_A[0]": "agent@regression.test"
 }

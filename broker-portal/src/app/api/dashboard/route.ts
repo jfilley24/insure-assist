@@ -30,12 +30,18 @@ export async function GET(request: Request) {
             return val === null || val === undefined || val === "" || strVal === "null" || strVal === "none" || strVal === "n/a";
         };
 
+        const clientWhereClause: any = {
+            brokerId: brokerId
+        };
+        
+        if (decodedToken.role === 'agent') {
+            clientWhereClause.agentId = decodedToken.uid;
+        }
+
         // CORE BUSINESS RULE: Only evaluate the single most recently uploaded policy for a given client + module type.
         const allLatestPolicies = await prisma.policy.findMany({
             where: {
-                client: {
-                    brokerId: brokerId
-                },
+                client: clientWhereClause,
                 fileType: {
                     not: "UNPROCESSED" // Don't alert on policies that are still actively extracting
                 }
@@ -92,10 +98,18 @@ export async function GET(request: Request) {
         reviewPolicies.sort((a, b) => b.missingFieldsCount - a.missingFieldsCount); // Most missing fields at top
 
         // 3. Recent COI Requests
+        const recentRequestWhereClause: any = {
+            brokerId: brokerId
+        };
+        
+        if (decodedToken.role === 'agent') {
+            recentRequestWhereClause.client = {
+                agentId: decodedToken.uid
+            };
+        }
+
         const recentRequests = await (prisma as any).cOIRequest.findMany({
-            where: {
-                brokerId: brokerId
-            },
+            where: recentRequestWhereClause,
             include: {
                 client: {
                     select: {
@@ -112,19 +126,27 @@ export async function GET(request: Request) {
 
         // 4. Metrics & Top Cards Data
         const totalClientsCount = await prisma.client.count({
-            where: { brokerId: brokerId }
+            where: clientWhereClause
         });
 
         const thirtyDaysAgo = new Date();
         thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
+        const coisLast30DaysWhereClause: any = {
+            brokerId: brokerId,
+            createdAt: {
+                gte: thirtyDaysAgo
+            }
+        };
+
+        if (decodedToken.role === 'agent') {
+            coisLast30DaysWhereClause.client = {
+                agentId: decodedToken.uid
+            };
+        }
+
         const coisLast30Days = await (prisma as any).cOIRequest.findMany({
-            where: {
-                brokerId: brokerId,
-                createdAt: {
-                    gte: thirtyDaysAgo
-                }
-            },
+            where: coisLast30DaysWhereClause,
             select: {
                 createdAt: true
             }

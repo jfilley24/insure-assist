@@ -20,10 +20,17 @@ export async function GET(request: Request) {
             return NextResponse.json({ error: "Forbidden: No Role or missing Broker assignment" }, { status: 403 });
         }
 
+        // RBAC: Agents can only see clients assigned to them
+        const whereClause: any = {
+            brokerId: decodedToken.brokerId
+        };
+        
+        if (decodedToken.role === 'agent') {
+            whereClause.agentId = decodedToken.uid;
+        }
+
         const clients = await prisma.client.findMany({
-            where: {
-                brokerId: decodedToken.brokerId
-            },
+            where: whereClause,
             include: {
                 policies: true,
                 broker: true
@@ -74,9 +81,15 @@ export async function POST(request: Request) {
             managedAuto = true,
             managedGL = true,
             managedUmb = true,
-            managedWC = true
+            managedWC = true,
+            agentId
         } = body;
         const brokerId = decodedToken.brokerId; // System-derived
+
+        let finalAgentId = agentId || decodedToken.uid;
+        if (decodedToken.role === 'agent') {
+            finalAgentId = decodedToken.uid;
+        }
 
         if (!name) {
             return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
@@ -124,7 +137,8 @@ export async function POST(request: Request) {
                 managedGL,
                 managedUmb,
                 managedWC,
-                updatedById: decodedToken.uid
+                updatedById: decodedToken.uid,
+                agentId: finalAgentId || null
             }
         });
 

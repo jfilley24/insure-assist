@@ -104,6 +104,9 @@ class ClientSettings(BaseModel):
     brokerState: Optional[str] = None
     brokerZip: Optional[str] = None
     brokerPhone: Optional[str] = None
+    brokerFax: Optional[str] = None
+    brokerContactName: Optional[str] = None
+    brokerContactEmail: Optional[str] = None
 
 # --- Completer Schema ---
 class FieldMapping(BaseModel):

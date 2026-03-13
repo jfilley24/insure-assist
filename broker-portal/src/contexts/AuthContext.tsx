@@ -6,6 +6,8 @@ import { auth } from "@/lib/firebase";
 
 export interface FirebaseUser extends BaseFirebaseUser {
     customClaims?: any;
+    role?: 'broker_admin' | 'agent' | 'superadmin' | string;
+    brokerId?: string;
 }
 
 interface AuthContextType {
@@ -50,11 +52,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
                     setToken(jwtToken);
                     setCustomClaims(decodedToken.claims);
-                    setUser(firebaseUser);
+                    
+                    const extendedUser = firebaseUser as FirebaseUser;
+                    extendedUser.role = decodedToken.claims.role as string | undefined;
+                    extendedUser.brokerId = decodedToken.claims.brokerId as string | undefined;
+                    setUser(extendedUser);
                 } catch (error) {
                     console.error("Failed to parse Firebase token", error);
                     // Fallback to setting just the user without claims if network fails
-                    setUser(firebaseUser);
+                    const extendedUser = firebaseUser as FirebaseUser;
+                    setUser(extendedUser);
                     setToken(null);
                     setCustomClaims(null);
                 }

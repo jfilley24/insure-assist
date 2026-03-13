@@ -137,7 +137,10 @@ async function setupClient(allTrue: boolean) {
         "F[0].P1[0].ExcessUmbrella_ClaimsMadeIndicator_A[0]": !allTrue ? "/1" : "",
         
         "F[0].P1[0].WorkersCompensationEmployersLiability_AnyPersonsExcludedIndicator_A[0]": allTrue ? "Y" : "N",
-        "F[0].P1[0].Policy_WorkersCompensation_SubrogationWaivedCode_A[0]": allTrue ? "X" : ""
+        "F[0].P1[0].Policy_WorkersCompensation_SubrogationWaivedCode_A[0]": allTrue ? "X" : "",
+        
+        "F[0].P1[0].Producer_ContactPerson_FullName_A[0]": "Regression Agent Name",
+        "F[0].P1[0].Producer_ContactPerson_EmailAddress_A[0]": "agent@regression.test"
     };
 
     return { expected, autoFields, glFields, umbFields, wcFields };
@@ -150,7 +153,7 @@ async function runPass(passName: string, allTrue: boolean) {
     const expectedJsonPath = path.join(__dirname, `expected_${passName}.json`);
     fs.writeFileSync(expectedJsonPath, JSON.stringify(expected, null, 2));
 
-    const apiUrl = `http://127.0.0.1:8001/generate-coi-manual`;
+    const apiUrl = `http://127.0.0.1:8000/generate-coi-manual`;
     const formData = new FormData();
     formData.append("certificate_holder_name", "Regression Certificate Holder");
     formData.append("description_of_operations", "Regression Description Of Operations block text.");
@@ -179,7 +182,9 @@ async function runPass(passName: string, allTrue: boolean) {
         brokerCity: "Testville",
         brokerState: "TX",
         brokerZip: "75001",
-        brokerPhone: "555-0199"
+        brokerPhone: "555-0199",
+        brokerContactName: "Regression Agent Name",
+        brokerContactEmail: "agent@regression.test"
     };
     formData.append("client_settings_json", JSON.stringify(clientSettingsPayload));
 
@@ -215,7 +220,9 @@ async function runPass(passName: string, allTrue: boolean) {
         const output = execSync(`"${pythonExePath}" "${pythonScriptPath}" "${outputPdfPath}" "${expectedJsonPath}"`, { encoding: 'utf-8' });
         console.log(output);
     } catch (e: any) {
-        console.error(`❌ Python Verification Failed for pass '${passName}':\n`, (e.stderr && e.stderr.toString()) || e.message);
+        console.error(`❌ Python Verification Failed for pass '${passName}':`);
+        if (e.stdout) console.log(e.stdout.toString());
+        if (e.stderr) console.error(e.stderr.toString());
         process.exit(1);
     }
 }

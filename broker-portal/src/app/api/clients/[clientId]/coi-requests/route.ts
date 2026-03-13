@@ -36,6 +36,7 @@ export async function POST(
                 managedGL: true,
                 managedUmb: true,
                 managedWC: true,
+                agentId: true,
                 broker: true // Fetch all broker fields dynamically
             }
         });
@@ -44,11 +45,25 @@ export async function POST(
             return NextResponse.json({ error: "Client not found or access denied" }, { status: 404 });
         }
 
-        // Fetch the user to get real first/last names
-        const dbUser = await (prisma as any).user.findUnique({
-            where: { id: decodedToken.uid }
+        // RBAC: Agents can only generate COIs for clients assigned to them
+        if (decodedToken.role === 'agent' && client.agentId !== decodedToken.uid) {
+            return NextResponse.json({ error: "Forbidden: You are not assigned to this client" }, { status: 403 });
+        }
+
+        if (!client.agentId) {
+            return NextResponse.json({ error: "Client must have an assigned Agent to generate a COI." }, { status: 400 });
+        }
+
+        const assignedAgent = await (prisma as any).user.findUnique({
+            where: { id: client.agentId }
         });
-        const requestorName = dbUser ? `${dbUser.firstName} ${dbUser.lastName || ''}`.trim() : (decodedToken.name || "Unknown Agent");
+        
+        if (!assignedAgent) {
+            return NextResponse.json({ error: "The assigned Agent could not be found." }, { status: 400 });
+        }
+        
+        const brokerContactName = `${assignedAgent.firstName} ${assignedAgent.lastName || ''}`.trim();
+        const brokerContactEmail = assignedAgent.email;
 
         const body = await request.json();
         const { gcsUri, source = "PORTAL", isManual, certificateHolderName, descriptionOfOperations } = body;
@@ -129,7 +144,10 @@ export async function POST(
             brokerCity: client.broker?.city,
             brokerState: client.broker?.state,
             brokerZip: client.broker?.postalCode,
-            brokerPhone: client.broker?.phoneNumber
+            brokerPhone: client.broker?.phoneNumber,
+            brokerFax: client.broker?.faxNumber,
+            brokerContactName: brokerContactName,
+            brokerContactEmail: brokerContactEmail
         };
         formData.append("client_settings_json", JSON.stringify(clientSettingsPayload));
 
@@ -190,7 +208,7 @@ export async function POST(
                 clientId,
                 brokerId: client.brokerId,
                 source: source,
-                requestedBy: isManual ? certificateHolderName : requestorName,
+                requestedBy: isManual ? certificateHolderName : (decodedToken.name || decodedToken.email || "Unknown Requestor"),
                 requestorId: decodedToken.uid,
                 requestDocumentUri: isManual ? null : gcsUri,
                 demandsJson: JSON.stringify(demands),
@@ -212,7 +230,10 @@ export async function POST(
         });
 
         console.log("7. Complete DB Record!");
-        return NextResponse.json(coiRequest, { status: 201 });
+        return NextResponse.json({
+            ...coiRequest,
+            pdfBase64: pdf_base64 
+        }, { status: 201 });
 
     } catch (error: any) {
         console.error("========== CRASH TRACE ==========");

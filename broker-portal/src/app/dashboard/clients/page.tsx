@@ -34,6 +34,25 @@ export default function ClientsPage() {
     const [editingClient, setEditingClient] = useState<any>(null);
     const [isEditSheetOpen, setIsEditSheetOpen] = useState(false);
     const [pageError, setPageError] = useState<string | null>(null);
+    const [team, setTeam] = useState<any[]>([]);
+
+    useEffect(() => {
+        const fetchTeam = async () => {
+            if (!token) return;
+            try {
+                const res = await fetch("/api/team", {
+                    headers: { Authorization: `Bearer ${token}` }
+                });
+                if (res.ok) {
+                    const data = await res.json();
+                    setTeam(data);
+                }
+            } catch (err) {
+                console.error("Failed to fetch team", err);
+            }
+        };
+        fetchTeam();
+    }, [token]);
 
     const fetchClients = async () => {
         if (!token) return;
@@ -99,7 +118,9 @@ export default function ClientsPage() {
                     <h1 className="text-3xl font-bold text-slate-900 tracking-tight">Clients</h1>
                     <p className="text-slate-500 mt-1">Manage insured entities and their associated policy documents.</p>
                 </div>
-                <AddClientSheet onSuccess={fetchClients} />
+                {user?.role === 'broker_admin' && (
+                    <AddClientSheet onSuccess={fetchClients} />
+                )}
             </header>
 
             {pageError && (
@@ -125,6 +146,7 @@ export default function ClientsPage() {
                             <TableHead className="font-semibold text-slate-900">Client Name</TableHead>
                             <TableHead className="font-semibold text-slate-900">Authorized Domains</TableHead>
                             <TableHead className="font-semibold text-slate-900">Active Policies</TableHead>
+                            <TableHead className="font-semibold text-slate-900">Agent</TableHead>
                             <TableHead className="font-semibold text-slate-900">Added</TableHead>
                             <TableHead className="w-[50px]"></TableHead>
                         </TableRow>
@@ -138,7 +160,7 @@ export default function ClientsPage() {
                             </TableRow>
                         ) : clients.length === 0 ? (
                             <TableRow>
-                                <TableCell colSpan={5} className="text-center py-12">
+                                <TableCell colSpan={6} className="text-center py-12">
                                     <div className="flex flex-col items-center justify-center space-y-3">
                                         <div className="w-12 h-12 bg-slate-100 rounded-full flex items-center justify-center">
                                             <Building2 className="h-6 w-6 text-slate-400" />
@@ -181,6 +203,11 @@ export default function ClientsPage() {
                                             })}
                                         </div>
                                     </TableCell>
+                                    <TableCell className="text-slate-600 font-medium">
+                                        {client.agentId 
+                                            ? team.find(t => t.uid === client.agentId)?.displayName || 'Unknown Agent'
+                                            : <span className="text-slate-400 italic">Unassigned</span>}
+                                    </TableCell>
                                     <TableCell className="text-slate-500">
                                         {new Date(client.createdAt).toLocaleDateString()}
                                     </TableCell>
@@ -204,12 +231,14 @@ export default function ClientsPage() {
                                                     Edit Client
                                                 </DropdownMenuItem>
                                                 <DropdownMenuSeparator />
-                                                <DropdownMenuItem
-                                                    className="text-red-600 focus:bg-red-50 focus:text-red-700"
-                                                    onClick={() => handleDeleteClient(client.id, client.name)}
-                                                >
-                                                    Delete
-                                                </DropdownMenuItem>
+                                                {user?.role === 'broker_admin' && (
+                                                    <DropdownMenuItem
+                                                        className="text-red-600 focus:bg-red-50 focus:text-red-700"
+                                                        onClick={() => handleDeleteClient(client.id, client.name)}
+                                                    >
+                                                        Delete
+                                                    </DropdownMenuItem>
+                                                )}
                                             </DropdownMenuContent>
                                         </DropdownMenu>
                                     </TableCell>

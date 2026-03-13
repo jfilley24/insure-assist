@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -13,6 +13,13 @@ import {
     SheetTitle,
     SheetTrigger,
 } from "@/components/ui/sheet";
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select";
 import { Plus, X } from "lucide-react";
 
 interface AddClientSheetProps {
@@ -20,7 +27,7 @@ interface AddClientSheetProps {
 }
 
 export function AddClientSheet({ onSuccess }: AddClientSheetProps) {
-    const { token } = useAuth();
+    const { token, user } = useAuth();
     const [isOpen, setIsOpen] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -34,6 +41,33 @@ export function AddClientSheet({ onSuccess }: AddClientSheetProps) {
     const [managedGL, setManagedGL] = useState(true);
     const [managedUmb, setManagedUmb] = useState(true);
     const [managedWC, setManagedWC] = useState(true);
+    
+    const [agentId, setAgentId] = useState<string>("");
+    const [team, setTeam] = useState<any[]>([]);
+
+    useEffect(() => {
+        const fetchTeam = async () => {
+            if (!token) return;
+            try {
+                const res = await fetch("/api/team", {
+                    headers: { Authorization: `Bearer ${token}` }
+                });
+                if (res.ok) {
+                    const data = await res.json();
+                    setTeam(data);
+                }
+            } catch (err) {
+                console.error("Failed to fetch team for assignment", err);
+            }
+        };
+        fetchTeam();
+    }, [token]);
+
+    useEffect(() => {
+        if (isOpen) {
+            setAgentId(user?.uid || "");
+        }
+    }, [isOpen, user?.uid]);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -74,6 +108,7 @@ export function AddClientSheet({ onSuccess }: AddClientSheetProps) {
                     managedGL,
                     managedUmb,
                     managedWC,
+                    agentId: agentId || user?.uid || null,
                     // TODO: Replace with dynamic multi-tenant ID mapping later
                     brokerId: "test-broker-123"
                 })
@@ -88,6 +123,7 @@ export function AddClientSheet({ onSuccess }: AddClientSheetProps) {
                 setManagedGL(true);
                 setManagedUmb(true);
                 setManagedWC(true);
+                setAgentId("");
                 setError(null);
                 onSuccess(); // Triggers parent table refresh
             } else {
@@ -138,6 +174,27 @@ export function AddClientSheet({ onSuccess }: AddClientSheetProps) {
                                 className="border-slate-300 focus-visible:ring-blue-500"
                                 required
                             />
+                        </div>
+
+                        <div className="space-y-2">
+                            <Label htmlFor="agent" className="text-sm font-semibold text-slate-700">
+                                Assigned Agent
+                            </Label>
+                            <Select value={agentId} onValueChange={setAgentId}>
+                                <SelectTrigger className="border-slate-300 focus:ring-blue-500 w-full">
+                                    <SelectValue placeholder="Select an agent..." />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {team.map((member) => (
+                                        <SelectItem key={member.id} value={member.id}>
+                                            {member.firstName} {member.lastName || ""}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                            <p className="text-[11px] text-slate-500 font-medium">
+                                The agent of record on COIs generated for this client.
+                            </p>
                         </div>
 
                         <div className="space-y-2">

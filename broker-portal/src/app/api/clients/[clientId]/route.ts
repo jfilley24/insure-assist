@@ -26,11 +26,18 @@ export async function GET(
         const resolvedParams = await params;
         const clientId = resolvedParams.clientId;
 
+        // RBAC: Agents can only fetch their own assigned clients
+        const whereClause: any = {
+            id: clientId,
+            brokerId: decodedToken.brokerId
+        };
+        
+        if (decodedToken.role === 'agent') {
+            whereClause.agentId = decodedToken.uid;
+        }
+
         const client = await prisma.client.findFirst({
-            where: {
-                id: clientId,
-                brokerId: decodedToken.brokerId
-            },
+            where: whereClause,
             include: {
                 policies: {
                     orderBy: {
@@ -99,7 +106,8 @@ export async function PUT(
             managedAuto,
             managedGL,
             managedUmb,
-            managedWC
+            managedWC,
+            agentId
         } = body;
 
         if (!name) {
@@ -117,13 +125,18 @@ export async function PUT(
             }
         }
 
-        // Fetch current client to get its brokerId
+        // Fetch current client to check permissions
         const currentClient = await prisma.client.findUnique({
             where: { id: clientId }
         });
 
         if (!currentClient || currentClient.brokerId !== decodedToken.brokerId) {
             return NextResponse.json({ error: "Client not found or access denied" }, { status: 404 });
+        }
+
+        // RBAC: Agents can only modify clients assigned to them
+        if (decodedToken.role === 'agent' && currentClient.agentId !== decodedToken.uid) {
+            return NextResponse.json({ error: "Forbidden: You are not assigned to this client" }, { status: 403 });
         }
 
         // Uniqueness Validation
@@ -164,6 +177,7 @@ export async function PUT(
                 ...(managedGL !== undefined && { managedGL }),
                 ...(managedUmb !== undefined && { managedUmb }),
                 ...(managedWC !== undefined && { managedWC }),
+                ...(agentId !== undefined && { agentId }),
                 updatedById: decodedToken.uid
             }
         });
@@ -216,6 +230,11 @@ export async function DELETE(
 
         if (!targetClient || targetClient.brokerId !== decodedToken.brokerId) {
             return NextResponse.json({ error: "Client not found or access denied" }, { status: 404 });
+        }
+
+        // RBAC: Agents can only delete clients assigned to them
+        if (decodedToken.role === 'agent' && targetClient.agentId !== decodedToken.uid) {
+            return NextResponse.json({ error: "Forbidden: You are not assigned to this client" }, { status: 403 });
         }
 
         const deletedClient = await prisma.client.delete({

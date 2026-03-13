@@ -21,6 +21,7 @@ export default function ClientDetailPage() {
 
     // State
     const [client, setClient] = useState<any>(null);
+    const [team, setTeam] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
 
     const clientId = params.clientId as string;
@@ -47,7 +48,21 @@ export default function ClientDetailPage() {
             }
         };
 
-        fetchClient();
+        const fetchTeam = async () => {
+             try {
+                 const res = await fetch("/api/team", {
+                     headers: { Authorization: `Bearer ${token}` }
+                 });
+                 if (res.ok) {
+                     const data = await res.json();
+                     setTeam(data);
+                 }
+             } catch (err) {
+                 console.error("Failed to fetch team", err);
+             }
+        };
+
+        Promise.all([fetchClient(), fetchTeam()]);
     }, [clientId, token]);
 
     const fetchClientRefresh = async () => {
@@ -93,6 +108,12 @@ export default function ClientDetailPage() {
                         <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight">{client.name}</h1>
                         <p className="text-sm text-slate-500 mt-1">
                             {client.authorizedDomains?.length > 0 ? client.authorizedDomains.join(', ') : 'No trusted domains'}
+                        </p>
+                        <p className="text-sm text-slate-600 mt-1 font-medium bg-slate-100 w-max px-2 py-0.5 rounded-md">
+                            Agent:{' '}
+                            {client.agentId
+                                ? team.find((t) => t.uid === client.agentId)?.displayName || 'Unknown Agent'
+                                : <span className="text-slate-400 italic font-normal">Unassigned</span>}
                         </p>
                     </div>
                 </div>

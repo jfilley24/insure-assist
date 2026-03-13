@@ -19,9 +19,9 @@ export async function GET(request: Request) {
             return NextResponse.json({ error: "Forbidden: Missing Broker assignment" }, { status: 403 });
         }
 
-        // Only Broker Admins can manage the team
-        if (decodedToken.role !== 'broker_admin') {
-            return NextResponse.json({ error: "Forbidden: Broker Admins only" }, { status: 403 });
+        // Broker Admins and Agents can view the team (Agents need it to assign clients)
+        if (!['broker_admin', 'agent'].includes(decodedToken.role)) {
+            return NextResponse.json({ error: "Forbidden: Insufficient Permissions" }, { status: 403 });
         }
 
         const prisma = getSecurePrisma(decodedToken);

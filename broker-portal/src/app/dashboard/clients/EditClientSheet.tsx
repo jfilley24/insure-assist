@@ -12,6 +12,13 @@ import {
     SheetHeader,
     SheetTitle,
 } from "@/components/ui/sheet";
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select";
 
 interface EditClientSheetProps {
     client: any;
@@ -21,7 +28,7 @@ interface EditClientSheetProps {
 }
 
 export function EditClientSheet({ client, isOpen, onOpenChange, onSuccess }: EditClientSheetProps) {
-    const { token } = useAuth();
+    const { token, user } = useAuth();
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
@@ -42,6 +49,27 @@ export function EditClientSheet({ client, isOpen, onOpenChange, onSuccess }: Edi
     const [managedUmb, setManagedUmb] = useState(client?.managedUmb ?? true);
     const [managedWC, setManagedWC] = useState(client?.managedWC ?? true);
 
+    const [agentId, setAgentId] = useState<string>(client?.agentId || "");
+    const [team, setTeam] = useState<any[]>([]);
+
+    useEffect(() => {
+        const fetchTeam = async () => {
+            if (!token) return;
+            try {
+                const res = await fetch("/api/team", {
+                    headers: { Authorization: `Bearer ${token}` }
+                });
+                if (res.ok) {
+                    const data = await res.json();
+                    setTeam(data);
+                }
+            } catch (err) {
+                console.error("Failed to fetch team for assignment", err);
+            }
+        };
+        fetchTeam();
+    }, [token]);
+
     // Handle updates when the client object changes
     useEffect(() => {
         if (client) {
@@ -57,9 +85,10 @@ export function EditClientSheet({ client, isOpen, onOpenChange, onSuccess }: Edi
             setManagedGL(client.managedGL ?? true);
             setManagedUmb(client.managedUmb ?? true);
             setManagedWC(client.managedWC ?? true);
+            setAgentId(client.agentId || user?.uid || "");
             setError(null);
         }
-    }, [client, isOpen]);
+    }, [client, isOpen, user?.uid]);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -104,7 +133,8 @@ export function EditClientSheet({ client, isOpen, onOpenChange, onSuccess }: Edi
                     managedAuto,
                     managedGL,
                     managedUmb,
-                    managedWC
+                    managedWC,
+                    agentId: agentId || user?.uid || null
                 })
             });
 
@@ -155,6 +185,27 @@ export function EditClientSheet({ client, isOpen, onOpenChange, onSuccess }: Edi
                                 className="border-slate-300 focus-visible:ring-blue-500"
                                 required
                             />
+                        </div>
+
+                        <div className="space-y-2">
+                            <Label htmlFor="edit-agent" className="text-sm font-semibold text-slate-700">
+                                Assigned Agent
+                            </Label>
+                            <Select value={agentId} onValueChange={setAgentId}>
+                                <SelectTrigger className="border-slate-300 focus:ring-blue-500 w-full">
+                                    <SelectValue placeholder="Select an agent..." />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {team.map((member) => (
+                                        <SelectItem key={member.id} value={member.id}>
+                                            {member.firstName} {member.lastName || ""}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                            <p className="text-[11px] text-slate-500 font-medium">
+                                The agent of record on COIs generated for this client.
+                            </p>
                         </div>
 
                         <div className="space-y-2">
