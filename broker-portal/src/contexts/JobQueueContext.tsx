@@ -26,6 +26,7 @@ interface JobQueueContextType {
     jobs: Job[];
     enqueuePolicyUpload: (file: File, clientId: string, policyType: string, token: string) => void;
     enqueueCoiRequest: (file: File, clientId: string, token: string, clientName: string) => void;
+    enqueueManualCoiRequest: (certificateHolderName: string, descriptionOfOperations: string, clientId: string, token: string, clientName: string) => void;
     dismissJob: (jobId: string) => void;
     dismissAllCompleted: () => void;
 }
@@ -138,8 +139,8 @@ export function JobQueueProvider({ children }: { children: ReactNode }) {
 
             if (!uploadRes.ok) throw new Error("Failed to upload the file to cloud storage.");
 
-            // 3. Trigger Vertex AI Extraction
-            updateJob(jobId, { step: "Extracting document via AI Engine (Approx 3-4 mins)..." });
+            // 3. Trigger Vertex AI Extraction (Streaming)
+            updateJob(jobId, { step: "Connecting to AI Engine..." });
             const extractRes = await fetch(`/api/clients/${clientId}/policies`, {
                 method: "POST",
                 headers: {
@@ -153,17 +154,55 @@ export function JobQueueProvider({ children }: { children: ReactNode }) {
                 })
             });
 
-            if (!extractRes.ok) throw new Error((await extractRes.json()).error || "AI Data Extraction Failed");
+            if (!extractRes.ok) throw new Error("AI Data Extraction Failed");
+            if (!extractRes.body) throw new Error("No response body from extraction route");
 
-            updateJob(jobId, { status: "COMPLETED", step: "Extraction Successful!", completedAt: new Date() });
+            const reader = extractRes.body.getReader();
+            const decoder = new TextDecoder();
+            let buffer = "";
 
-            toast.success("Policy Extracted Successfully", {
-                description: `Finished processing ${file.name}`
-            });
+            let completed = false;
+            while (!completed) {
+                const { value, done } = await reader.read();
+                if (done) break;
+                
+                buffer += decoder.decode(value, { stream: true });
+                const lines = buffer.split('\n\n');
+                
+                // Keep the last partial line in the buffer
+                buffer = lines.pop() || "";
 
-            // Auto-refresh history if the user is currently viewing the client
-            if (typeof window !== "undefined") {
-                window.dispatchEvent(new Event("refresh-history"));
+                for (const line of lines) {
+                    if (line.startsWith('data: ')) {
+                        try {
+                            const data = JSON.parse(line.slice(6));
+                            
+                            if (data.error) {
+                                throw new Error(data.error);
+                            } else if (data.update) {
+                                updateJob(jobId, { step: data.update });
+                            } else if (data.result) {
+                                updateJob(jobId, { status: "COMPLETED", step: "Extraction Successful!", completedAt: new Date() });
+
+                                toast.success("Policy Extracted Successfully", {
+                                    description: `Finished processing ${file.name}`
+                                });
+
+                                // Auto-refresh history if the user is currently viewing the client
+                                if (typeof window !== "undefined") {
+                                    window.dispatchEvent(new Event("refresh-history"));
+                                }
+                                completed = true;
+                            }
+                        } catch (e: any) {
+                            if (e.message && !e.message.includes("Unexpected token")) {
+                                // Re-throw actual API errors
+                                throw e;
+                            }
+                            console.error("Error parsing SSE chunk:", e);
+                        }
+                    }
+                }
             }
 
         } catch (err: any) {
@@ -207,7 +246,7 @@ export function JobQueueProvider({ children }: { children: ReactNode }) {
             if (!uploadRes.ok) throw new Error("Failed to upload to Google Cloud Storage.");
 
             // 3. Trigger ACORD Generation Backend
-            updateJob(jobId, { step: "Generating COI via AI Engine (Approx 1-2 mins)..." });
+            updateJob(jobId, { step: "Generating COI via AI Engine..." });
             const generateRes = await fetch(`/api/clients/${clientId}/coi-requests`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
@@ -239,9 +278,61 @@ export function JobQueueProvider({ children }: { children: ReactNode }) {
         }
     };
 
+    const enqueueManualCoiRequest = async (certificateHolderName: string, descriptionOfOperations: string, clientId: string, token: string, clientName: string) => {
+        const jobId = addJob({
+            type: "COI_REQUEST",
+            title: "Generating COI (Manual)",
+            subtitle: `Cert Holder: ${certificateHolderName} (For ${clientName})`,
+            clientId,
+            targetTab: "requests"
+        });
+
+        toast("Manual COI Generation Started", {
+            description: `Now drafting Certificate of Insurance for ${clientName}`
+        });
+
+        updateJob(jobId, { status: "PROCESSING", step: "Generating COI via AI Engine..." });
+
+        try {
+            // Trigger ACORD Generation Backend Directly
+            const generateRes = await fetch(`/api/clients/${clientId}/coi-requests`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+                body: JSON.stringify({ 
+                    isManual: true, 
+                    certificateHolderName, 
+                    descriptionOfOperations,
+                    source: "PORTAL", 
+                })
+            });
+
+            if (!generateRes.ok) throw new Error((await generateRes.json()).error || "Generation engine failed.");
+
+            const data = await generateRes.json();
+
+            updateJob(jobId, { status: "COMPLETED", step: "COI Generated!", resultData: data, completedAt: new Date() });
+
+            toast.success("COI Generated Successfully", {
+                description: `Finished drafting COI for ${clientName}`
+            });
+
+            // Auto-refresh history if the user is currently viewing the client
+            if (typeof window !== "undefined") {
+                window.dispatchEvent(new Event("refresh-history"));
+            }
+
+        } catch (err: any) {
+            console.error("Manual COI Request Job Failed", err);
+            updateJob(jobId, { status: "FAILED", step: "Failed", error: err.message || "An unexpected error occurred." });
+            
+            toast.error("Manual COI Generation Failed", {
+                description: err.message || "An unexpected error occurred."
+            });
+        }
+    };
 
     return (
-        <JobQueueContext.Provider value={{ jobs, enqueuePolicyUpload, enqueueCoiRequest, dismissJob, dismissAllCompleted }}>
+        <JobQueueContext.Provider value={{ jobs, enqueuePolicyUpload, enqueueCoiRequest, enqueueManualCoiRequest, dismissJob, dismissAllCompleted }}>
             {children}
             {/* The JobQueueList component will be rendered here or globally in layout.tsx consuming this context */}
         </JobQueueContext.Provider>

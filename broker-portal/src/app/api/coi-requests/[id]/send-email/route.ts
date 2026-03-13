@@ -76,6 +76,17 @@ export async function POST(
             }
         });
 
+        await (prisma as any).auditLog.create({
+            data: {
+                userId: decodedToken.uid,
+                action: "EMAIL_DISPATCHED",
+                entityType: "COMMUNICATION_LOG",
+                entityId: commLog.id,
+                brokerId: decodedToken.brokerId,
+                details: JSON.stringify({ to, subject, coiRequestId: id })
+            }
+        });
+
         return NextResponse.json({ success: true, log: commLog }, { status: 200 });
 
     } catch (error: any) {

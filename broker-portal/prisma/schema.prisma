@@ -20,6 +20,15 @@ model Broker {
   // Custom Firebase Domain binding for ingestion (e.g., "wfains.com")
   ingestionDomain String   @unique 
 
+  // Address & Contact Info (For ACORD Forms)
+  addressLine1    String?
+  addressLine2    String?
+  city            String?
+  state           String?
+  postalCode      String?
+  phoneNumber     String?
+  faxNumber       String?
+
   // Role Level Security mapped attributes
   brokerAdminIds  String   // SQLite doesn't support arrays, mapping to comma-separated string
   
@@ -38,8 +47,21 @@ model Client {
   updatedAt       DateTime @updatedAt
   updatedById     String?  // Firebase UID of the last modifier
 
+  // Address Info (For ACORD Forms)
+  addressLine1    String?
+  addressLine2    String?
+  city            String?
+  state           String?
+  postalCode      String?
+
   brokerId        String
   broker          Broker   @relation(fields: [brokerId], references: [id], onDelete: Cascade)
+
+  // Policy Management Settings
+  managedAuto     Boolean  @default(true)
+  managedGL       Boolean  @default(true)
+  managedUmb      Boolean  @default(true)
+  managedWC       Boolean  @default(true)
 
   // Contact matching (for ACORD routing)
   authorizedDomains String   // SQLite doesn't support arrays, mapping to comma-separated string

@@ -6,12 +6,15 @@ You will receive:
 1. The requested demands (from the Request Reader Agent or direct text).
 2. The actual policy coverages (from the Policy Reader Agents).
 3. The JSON dictionary the Completer Agent mapped for the ACORD form.
+4. The JSON dictionary of Client Settings, which dictates which policies are managed.
 
 You must:
-1. Verify that every single coverage demanded by the Certificate Holder is actually met by the Client's policies.
-2. Check the `expiration_date` of every single policy provided. If ANY policy is expired compared to today's date, you MUST fail that policy.
-3. Decide if the certificate "Passes" or "Fails". It fails if ANY demanded coverage or endorsement is missing or too low, or if the policy is EXPIRED.
-4. Structure your findings into a detailed review for each tracked policy (e.g. General Liability, Auto Liability, Umbrella, Workers Comp).
+1. Verify that every single coverage demanded by the Certificate Holder is actually met by the Client's policies, EXCEPT for policies that are NOT managed by the broker.
+2. If `client_settings` indicates a policy is NOT managed (e.g. `managedWC` is false), you MUST completely ignore that policy type and all demands associated with it. Do NOT map any ACORD fields for any policy type that is not managed. Leave those fields entirely blank. If a policy is NOT managed (e.g. `managedWC` is false), you MUST mark that policy as "PASSED" and explicitly note in the comments: "Policy is unmanaged. Skipped review." You MUST NOT fail the review for missing coverages on an unmanaged policy.
+3. Check the `expiration_date` of every single policy provided. If ANY policy is expired compared to today's date, you MUST fail that policy.
+4. Verify that the 5-digit `naic_code` is present for every managed policy provided. If it is null or missing for a specific policy (e.g. Auto), you MUST fail that policy and note the missing NAIC code in your comments.
+5. Decide if the certificate "Passes" or "Fails". It fails if ANY demanded coverage or endorsement is missing or too low, if the policy is EXPIRED, or if the NAIC code is missing.
+6. Structure your findings into a detailed review for each tracked policy (e.g. General Liability, Auto Liability, Umbrella, Workers Comp).
 
 Your output must be structured JSON containing:
 - `passed`: true or false

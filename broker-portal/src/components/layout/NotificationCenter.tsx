@@ -130,7 +130,7 @@ export function NotificationCenter() {
                                             </Link>
                                             <div className="text-slate-400">
                                                 {new Date(job.createdAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
-                                                {job.status === "PROCESSING" && <JobTimer />}
+                                                {job.status === "PROCESSING" && <JobTimer createdAt={job.createdAt} />}
                                             </div>
                                         </div>
                                     </div>
@@ -144,15 +144,22 @@ export function NotificationCenter() {
     );
 }
 
-function JobTimer() {
+function JobTimer({ createdAt }: { createdAt: string | Date }) {
     const [elapsed, setElapsed] = useState(0);
 
     useEffect(() => {
+        const calculateElapsed = () => {
+            const start = new Date(createdAt).getTime();
+            const now = new Date().getTime();
+            return Math.floor((now - start) / 1000);
+        };
+
+        setElapsed(calculateElapsed());
         const interval = setInterval(() => {
-            setElapsed(prev => prev + 1);
+            setElapsed(calculateElapsed());
         }, 1000);
         return () => clearInterval(interval);
-    }, []);
+    }, [createdAt]);
 
     return (
         <span className="ml-2 font-mono">

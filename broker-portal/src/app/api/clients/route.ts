@@ -67,7 +67,15 @@ export async function POST(request: Request) {
         }
 
         const body = await request.json();
-        const { name, authorizedDomains, primaryEmail } = body;
+        const { 
+            name, 
+            authorizedDomains, 
+            primaryEmail,
+            managedAuto = true,
+            managedGL = true,
+            managedUmb = true,
+            managedWC = true
+        } = body;
         const brokerId = decodedToken.brokerId; // System-derived
 
         if (!name) {
@@ -112,6 +120,10 @@ export async function POST(request: Request) {
                 brokerId,
                 authorizedDomains: validatedDomains.join(','),
                 primaryEmail,
+                managedAuto,
+                managedGL,
+                managedUmb,
+                managedWC,
                 updatedById: decodedToken.uid
             }
         });

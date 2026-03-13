@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { PolicyUploadDropzone } from "./PolicyUploadDropzone";
 import { Button } from "@/components/ui/button";
 import { FileCheck, Calendar, FilePenLine, RefreshCw, Loader2, AlertTriangle, CheckCircle2 } from "lucide-react";
+import { useJobQueue, Job } from "@/contexts/JobQueueContext";
 import {
     Sheet,
     SheetContent,
@@ -23,6 +24,14 @@ interface PolicyManagerProps {
     onRefresh: () => void;
 }
 
+const isBooleanField = (key: string) => {
+    return key.startsWith('is_') || 
+           key.startsWith('has_') || 
+           key.startsWith('covers_') || 
+           key.endsWith('_required') || 
+           key.includes('proprietor_excluded');
+};
+
 const isFieldConfirmedEmpty = (val: any) => {
     return String(val).trim() === "N/A (Confirmed)";
 };
@@ -36,6 +45,17 @@ const isFieldEmpty = (val: any) => {
 export function PolicyManager({ policyType, clientId, existingPolicy, onRefresh }: PolicyManagerProps) {
     const [isReplacing, setIsReplacing] = useState(false);
     const [isSheetOpen, setIsSheetOpen] = useState(false);
+
+    const { jobs } = useJobQueue();
+
+    // Check if there is an active background job for this exact policy type on this client
+    const activeJob = jobs.find((j: Job) => 
+        j.type === "POLICY_UPLOAD" && 
+        j.clientId === clientId && 
+        // We know the title is set to `Extracting ${policyType} Policy` in the JobContext
+        j.title.includes(policyType) &&
+        (j.status === "PENDING" || j.status === "PROCESSING")
+    );
 
     // Calculate missing fields to warn the user
     const missingFieldsCount = (() => {
@@ -76,7 +96,22 @@ export function PolicyManager({ policyType, clientId, existingPolicy, onRefresh 
         }
     })();
 
-    // If there is no policy uploaded, OR the user clicked "Replace", show the dropzone.
+    // If there's an active job in the background, override the UI to show the processing state
+    if (activeJob) {
+        return (
+            <div className="w-full">
+                <div className="border border-blue-100 bg-blue-50/50 rounded-lg p-8 flex flex-col items-center justify-center text-center space-y-4">
+                    <Loader2 className="w-8 h-8 text-blue-500 animate-spin" />
+                    <div>
+                        <h3 className="font-semibold text-blue-900">Importing {policyType} Policy</h3>
+                        <p className="text-sm text-blue-600 mt-1">{activeJob.step}</p>
+                        <p className="text-xs text-slate-500 mt-4">(This usually takes 3-4 minutes)</p>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
     if (!existingPolicy || isReplacing) {
         return (
             <div className="relative">
@@ -85,14 +120,15 @@ export function PolicyManager({ policyType, clientId, existingPolicy, onRefresh 
                     clientId={clientId}
                     onUploadSuccess={() => {
                         setIsReplacing(false);
-                        onRefresh();
+                        // We do NOT immediately refresh the parent because the backend is still running the 
+                        // LLM extraction in the background. The activeJob state will catch it instead.
                     }}
                 />
                 {isReplacing && (
                     <Button
                         variant="ghost"
                         size="sm"
-                        className="absolute -top-10 right-2 text-slate-500"
+                        className="absolute top-2 right-2 text-slate-500 bg-white/50 hover:bg-slate-100"
                         onClick={() => setIsReplacing(false)}
                     >
                         Cancel Replace
@@ -104,15 +140,15 @@ export function PolicyManager({ policyType, clientId, existingPolicy, onRefresh 
 
     // Otherwise, show the Managed State
     return (
-        <div className="p-6 bg-emerald-50/50 border border-emerald-100 rounded-b-lg flex flex-col gap-4">
+        <div className="flex flex-col gap-4">
             <div className="flex items-start justify-between">
                 <div className="flex items-center gap-3">
-                    <div className="bg-emerald-100 p-2 rounded-full">
-                        <FileCheck className="w-5 h-5 text-emerald-600" />
+                    <div className="bg-slate-100 p-2 rounded-full">
+                        <FileCheck className="w-5 h-5 text-slate-600" />
                     </div>
                     <div>
                         <div className="flex items-center gap-2">
-                            <h4 className="font-semibold text-emerald-900 truncate max-w-[280px]" title={existingPolicy.filename}>
+                            <h4 className="font-semibold text-slate-900 truncate max-w-[280px]" title={existingPolicy.filename}>
                                 {existingPolicy.filename}
                             </h4>
                             {expirationInfo.isExpired && (
@@ -131,7 +167,7 @@ export function PolicyManager({ policyType, clientId, existingPolicy, onRefresh 
                         <div className="flex items-center justify-between w-full mt-0.5">
                             <p className={`text-xs flex items-center gap-1 ${expirationInfo.isExpired ? 'text-red-600' :
                                 expirationInfo.isExpiringSoon ? 'text-yellow-600' :
-                                    'text-emerald-600'
+                                    'text-slate-600'
                                 }`}>
                                 <Calendar className="w-3 h-3" />
                                 Exp: {existingPolicy.expirationDate ? new Date(existingPolicy.expirationDate).toLocaleDateString() : 'Unknown'}
@@ -142,7 +178,7 @@ export function PolicyManager({ policyType, clientId, existingPolicy, onRefresh 
                                 )}
                             </p>
                             {existingPolicy.uploadedAt && (
-                                <p className="text-[10px] text-emerald-600/70 font-medium ml-4">
+                                <p className="text-[10px] text-slate-500 font-medium ml-4">
                                     Uploaded: {new Date(existingPolicy.uploadedAt).toLocaleDateString()}
                                 </p>
                             )}
@@ -165,7 +201,7 @@ export function PolicyManager({ policyType, clientId, existingPolicy, onRefresh 
                 <Button
                     variant="outline"
                     size="sm"
-                    className="flex-1 bg-white border-emerald-200 text-emerald-700 hover:bg-emerald-50"
+                    className="flex-1 bg-white border-slate-200 text-slate-700 hover:bg-slate-50"
                     onClick={() => setIsSheetOpen(true)}
                 >
                     <FilePenLine className="w-4 h-4 mr-2" />
@@ -220,7 +256,7 @@ function PolicyEditorSheet({ isOpen, onClose, policy, onRefresh }: { isOpen: boo
         setFormData(parseAIJson(policy?.acord_fields_json));
     }, [policy?.acord_fields_json]);
 
-    const handleChange = (key: string, value: string) => {
+    const handleChange = (key: string, value: string | boolean) => {
         setFormData(prev => ({ ...prev, [key]: value }));
     };
 
@@ -311,7 +347,7 @@ function PolicyEditorSheet({ isOpen, onClose, policy, onRefresh }: { isOpen: boo
                                                     variant="outline"
                                                     size="icon"
                                                     className="shrink-0 border-amber-200 text-amber-600 hover:bg-amber-100 hover:text-amber-700"
-                                                    onClick={() => handleChange(key, "N/A (Confirmed)")}
+                                                    onClick={() => handleChange(key, isBooleanField(key) ? false : "N/A (Confirmed)")}
                                                     title="Click to confirm this field is intentionally missing."
                                                 >
                                                     <CheckCircle2 className="w-4 h-4" />

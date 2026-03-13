@@ -5,7 +5,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Download, CheckCircle2, AlertTriangle, Clock, Mail, RefreshCw } from "lucide-react";
+import { Download, CheckCircle2, AlertTriangle, Clock, Mail, RefreshCw, Loader2 } from "lucide-react";
 
 interface ClientHistoryTabProps {
     clientId: string;
@@ -18,6 +18,7 @@ export function ClientHistoryTab({ clientId, clientEmail, clientName }: ClientHi
     const [history, setHistory] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [downloadingId, setDownloadingId] = useState<string | null>(null);
 
     const [currentPage, setCurrentPage] = useState(1);
     const ITEMS_PER_PAGE = 5;
@@ -50,6 +51,7 @@ export function ClientHistoryTab({ clientId, clientEmail, clientName }: ClientHi
 
     const handleDownload = async (id: string, fileName: string) => {
         if (!token) return;
+        setDownloadingId(id);
         try {
             const res = await fetch(`/api/coi-requests/${id}/download`, {
                 headers: { Authorization: `Bearer ${token}` },
@@ -74,9 +76,11 @@ export function ClientHistoryTab({ clientId, clientEmail, clientName }: ClientHi
             document.body.appendChild(a);
             a.click();
             document.body.removeChild(a);
-            window.URL.revokeObjectURL(downloadUrl);
+            setTimeout(() => window.URL.revokeObjectURL(downloadUrl), 1000);
         } catch (err: any) {
-            alert(`Error preparing download: ${err.message}`);
+            alert(err.message || "Failed to download file");
+        } finally {
+            setDownloadingId(null);
         }
     };
 
@@ -140,37 +144,45 @@ export function ClientHistoryTab({ clientId, clientEmail, clientName }: ClientHi
                                                         const reqDate = new Date(req.createdAt).toISOString().split('T')[0];
                                                         handleDownload(req.id, `${formattedName}_COI_${reqDate}.pdf`);
                                                     }}
+                                                    disabled={downloadingId === req.id}
                                                 >
-                                                    <Download className="w-4 h-4 mr-2" /> Download Document
+                                                    {downloadingId === req.id ? (
+                                                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                                    ) : (
+                                                        <Download className="w-4 h-4 mr-2" />
+                                                    )}
+                                                    Download Document
                                                 </Button>
                                             )}
                                         </div>
                                     </CardHeader>
                                     <CardContent className="pt-4">
                                         <div className="space-y-4">
-                                            <div>
-                                                <h4 className="text-sm font-semibold text-slate-700 mb-2">AI Review Context</h4>
-                                                <div className="bg-slate-50 p-4 rounded-md border text-sm text-slate-600">
-                                                    {(() => {
-                                                        if (!req.reviewReport) return <span className="italic">No report found.</span>;
-                                                        try {
-                                                            const reviews = JSON.parse(req.reviewReport);
-                                                            if (Array.isArray(reviews)) {
-                                                                return reviews.map((rev: any, idx) => (
-                                                                    <div key={idx} className="mb-3 last:mb-0">
-                                                                        <strong className="text-slate-800">{rev.policy_type}</strong> - {rev.status}
-                                                                        <ul className="list-disc pl-5 mt-1 text-slate-500">
-                                                                            {Array.isArray(rev.comments) ? rev.comments.map((c: string, cidx: number) => <li key={cidx}>{c}</li>) : <li>{rev.comments}</li>}
-                                                                        </ul>
-                                                                    </div>
-                                                                ));
+                                            {req.reviewReport && req.reviewReport !== "[]" && req.reviewReport !== "null" && (
+                                                <div>
+                                                    <h4 className="text-sm font-semibold text-slate-700 mb-2">AI Review Context</h4>
+                                                    <div className="bg-slate-50 p-4 rounded-md border text-sm text-slate-600">
+                                                        {(() => {
+                                                            if (!req.reviewReport) return <span className="italic">No report found.</span>;
+                                                            try {
+                                                                const reviews = JSON.parse(req.reviewReport);
+                                                                if (Array.isArray(reviews)) {
+                                                                    return reviews.map((rev: any, idx) => (
+                                                                        <div key={idx} className="mb-3 last:mb-0">
+                                                                            <strong className="text-slate-800">{rev.policy_type}</strong> - {rev.status}
+                                                                            <ul className="list-disc pl-5 mt-1 text-slate-500">
+                                                                                {Array.isArray(rev.comments) ? rev.comments.map((c: string, cidx: number) => <li key={cidx}>{c}</li>) : <li>{rev.comments}</li>}
+                                                                            </ul>
+                                                                        </div>
+                                                                    ));
+                                                                }
+                                                            } catch (e) {
+                                                                return <div className="whitespace-pre-wrap">{req.reviewReport}</div>;
                                                             }
-                                                        } catch (e) {
-                                                            return <div className="whitespace-pre-wrap">{req.reviewReport}</div>;
-                                                        }
-                                                    })()}
+                                                        })()}
+                                                    </div>
                                                 </div>
-                                            </div>
+                                            )}
 
                                             {req.communicationLogs && req.communicationLogs.length > 0 && (
                                                 <div>

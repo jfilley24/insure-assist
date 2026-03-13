@@ -4,6 +4,7 @@ Read the provided policy text and extract the exact coverages your client actual
 
 Output a structured JSON object containing:
 - Insurer Name (for WC)
+- NAIC Code (Extract the 5-digit NAIC Code ONLY if it is explicitly written on the document. If it is not explicitly written, return null. Do NOT use your internal knowledge to guess NAIC codes.)
 - Policy Number
 - Policy Effective Date
 - Policy Expiration Date

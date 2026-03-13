@@ -3,6 +3,10 @@ name: PR Checks
 on:
   pull_request:
     branches: [ "development", "production" ]
+    paths:
+      - 'broker-portal/**'
+      - 'acord/**'
+      - '.github/workflows/pr-checks.yml'
 
 jobs:
   regression-tests:

@@ -28,6 +28,12 @@ export function AddClientSheet({ onSuccess }: AddClientSheetProps) {
     const [name, setName] = useState("");
     const [domainsInput, setDomainsInput] = useState("");
     const [primaryEmail, setPrimaryEmail] = useState("");
+    
+    // Policy Management Settings
+    const [managedAuto, setManagedAuto] = useState(true);
+    const [managedGL, setManagedGL] = useState(true);
+    const [managedUmb, setManagedUmb] = useState(true);
+    const [managedWC, setManagedWC] = useState(true);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -64,6 +70,10 @@ export function AddClientSheet({ onSuccess }: AddClientSheetProps) {
                     name,
                     authorizedDomains,
                     primaryEmail: primaryEmail ? primaryEmail.trim() : null,
+                    managedAuto,
+                    managedGL,
+                    managedUmb,
+                    managedWC,
                     // TODO: Replace with dynamic multi-tenant ID mapping later
                     brokerId: "test-broker-123"
                 })
@@ -74,6 +84,10 @@ export function AddClientSheet({ onSuccess }: AddClientSheetProps) {
                 setName("");
                 setDomainsInput("");
                 setPrimaryEmail("");
+                setManagedAuto(true);
+                setManagedGL(true);
+                setManagedUmb(true);
+                setManagedWC(true);
                 setError(null);
                 onSuccess(); // Triggers parent table refresh
             } else {
@@ -157,6 +171,33 @@ export function AddClientSheet({ onSuccess }: AddClientSheetProps) {
                             <p className="text-[11px] text-slate-500 font-medium">
                                 We will automatically email the generated Certificate of Insurance to this address.
                             </p>
+                        </div>
+
+                        <div className="pt-4 border-t border-slate-100 space-y-4">
+                            <div>
+                                <h3 className="text-sm font-semibold text-slate-800">Managed Policies</h3>
+                                <p className="text-[11px] text-slate-500 font-medium">
+                                    Uncheck coverages that are handled by another broker. The COI generator will leave these blank.
+                                </p>
+                            </div>
+                            <div className="grid grid-cols-2 gap-4">
+                                <Label className="flex items-center gap-2 cursor-pointer text-sm font-medium text-slate-700">
+                                    <input type="checkbox" className="rounded border-slate-300 w-4 h-4 text-blue-600 focus:ring-blue-500" checked={managedAuto} onChange={(e) => setManagedAuto(e.target.checked)} />
+                                    Commercial Auto
+                                </Label>
+                                <Label className="flex items-center gap-2 cursor-pointer text-sm font-medium text-slate-700">
+                                    <input type="checkbox" className="rounded border-slate-300 w-4 h-4 text-blue-600 focus:ring-blue-500" checked={managedGL} onChange={(e) => setManagedGL(e.target.checked)} />
+                                    General Liability
+                                </Label>
+                                <Label className="flex items-center gap-2 cursor-pointer text-sm font-medium text-slate-700">
+                                    <input type="checkbox" className="rounded border-slate-300 w-4 h-4 text-blue-600 focus:ring-blue-500" checked={managedUmb} onChange={(e) => setManagedUmb(e.target.checked)} />
+                                    Umbrella / Excess
+                                </Label>
+                                <Label className="flex items-center gap-2 cursor-pointer text-sm font-medium text-slate-700">
+                                    <input type="checkbox" className="rounded border-slate-300 w-4 h-4 text-blue-600 focus:ring-blue-500" checked={managedWC} onChange={(e) => setManagedWC(e.target.checked)} />
+                                    Workers Comp
+                                </Label>
+                            </div>
                         </div>
                     </div>
 

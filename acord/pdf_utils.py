@@ -19,7 +19,7 @@ def fill_acord_25(template_path: str, output_path: str, fields: dict):
     Fills an ACORD 25 PDF template with mapping fields natively using pypdf.
     """
     from pypdf import PdfReader, PdfWriter
-    from pypdf.generic import NameObject
+    from pypdf.generic import NameObject, NumberObject
     
     try:
         reader = PdfReader(template_path)
@@ -35,6 +35,15 @@ def fill_acord_25(template_path: str, output_path: str, fields: dict):
                 fields,
                 auto_regenerate=True # Ask pypdf to regenerate the visual appearance streams
             )
+            
+        # Flatten all form fields to make them ReadOnly (not editable)
+        for page in writer.pages:
+            if "/Annots" in page:
+                for annot in page["/Annots"]:
+                    annot_obj = annot.get_object()
+                    # Bit 1 (value 1) is the ReadOnly flag in PDF spec
+                    current_flags = annot_obj.get("/Ff", 0)
+                    annot_obj.update({NameObject("/Ff"): NumberObject(current_flags | 1)})
         
         # Ensure the directory exists
         os.makedirs(os.path.dirname(output_path), exist_ok=True)

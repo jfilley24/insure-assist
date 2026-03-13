@@ -28,6 +28,19 @@ export function EditClientSheet({ client, isOpen, onOpenChange, onSuccess }: Edi
     const [name, setName] = useState(client?.name || "");
     const [domainsInput, setDomainsInput] = useState(client?.authorizedDomains?.join(", ") || "");
     const [primaryEmail, setPrimaryEmail] = useState(client?.primaryEmail || "");
+    
+    // Address fields
+    const [addressLine1, setAddressLine1] = useState(client?.addressLine1 || "");
+    const [addressLine2, setAddressLine2] = useState(client?.addressLine2 || "");
+    const [city, setCity] = useState(client?.city || "");
+    const [state, setState] = useState(client?.state || "");
+    const [postalCode, setPostalCode] = useState(client?.postalCode || "");
+
+    // Policy Management Settings
+    const [managedAuto, setManagedAuto] = useState(client?.managedAuto ?? true);
+    const [managedGL, setManagedGL] = useState(client?.managedGL ?? true);
+    const [managedUmb, setManagedUmb] = useState(client?.managedUmb ?? true);
+    const [managedWC, setManagedWC] = useState(client?.managedWC ?? true);
 
     // Handle updates when the client object changes
     useEffect(() => {
@@ -35,6 +48,15 @@ export function EditClientSheet({ client, isOpen, onOpenChange, onSuccess }: Edi
             setName(client.name || "");
             setDomainsInput(client.authorizedDomains?.join(", ") || "");
             setPrimaryEmail(client.primaryEmail || "");
+            setAddressLine1(client.addressLine1 || "");
+            setAddressLine2(client.addressLine2 || "");
+            setCity(client.city || "");
+            setState(client.state || "");
+            setPostalCode(client.postalCode || "");
+            setManagedAuto(client.managedAuto ?? true);
+            setManagedGL(client.managedGL ?? true);
+            setManagedUmb(client.managedUmb ?? true);
+            setManagedWC(client.managedWC ?? true);
             setError(null);
         }
     }, [client, isOpen]);
@@ -73,7 +95,16 @@ export function EditClientSheet({ client, isOpen, onOpenChange, onSuccess }: Edi
                 body: JSON.stringify({
                     name,
                     authorizedDomains,
-                    primaryEmail: primaryEmail ? primaryEmail.trim() : null
+                    primaryEmail: primaryEmail ? primaryEmail.trim() : null,
+                    addressLine1: addressLine1 ? addressLine1.trim() : null,
+                    addressLine2: addressLine2 ? addressLine2.trim() : null,
+                    city: city ? city.trim() : null,
+                    state: state ? state.trim() : null,
+                    postalCode: postalCode ? postalCode.trim() : null,
+                    managedAuto,
+                    managedGL,
+                    managedUmb,
+                    managedWC
                 })
             });
 
@@ -157,6 +188,63 @@ export function EditClientSheet({ client, isOpen, onOpenChange, onSuccess }: Edi
                             <p className="text-[11px] text-slate-500 font-medium">
                                 We will automatically email the generated Certificate of Insurance to this address.
                             </p>
+                        </div>
+                        
+                        {/* Address Fields */}
+                        <div className="pt-4 border-t border-slate-100 space-y-4">
+                            <h3 className="text-sm font-semibold text-slate-800">Mailing Address (For ACORD 25)</h3>
+                            <div className="space-y-2">
+                                <Label htmlFor="edit-address1" className="text-xs font-semibold text-slate-600">Address Line 1</Label>
+                                <Input id="edit-address1" value={addressLine1} onChange={e => setAddressLine1(e.target.value)} placeholder="123 Main St" />
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="edit-address2" className="text-xs font-semibold text-slate-600">Address Line 2</Label>
+                                <Input id="edit-address2" value={addressLine2} onChange={e => setAddressLine2(e.target.value)} placeholder="Suite 100" />
+                            </div>
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="space-y-2">
+                                    <Label htmlFor="edit-city" className="text-xs font-semibold text-slate-600">City</Label>
+                                    <Input id="edit-city" value={city} onChange={e => setCity(e.target.value)} placeholder="Long Beach" />
+                                </div>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div className="space-y-2">
+                                        <Label htmlFor="edit-state" className="text-xs font-semibold text-slate-600">State</Label>
+                                        <Input id="edit-state" value={state} onChange={e => setState(e.target.value)} placeholder="CA" maxLength={2} />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label htmlFor="edit-zip" className="text-xs font-semibold text-slate-600">Zip</Label>
+                                        <Input id="edit-zip" value={postalCode} onChange={e => setPostalCode(e.target.value)} placeholder="90802" />
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Managed Policies */}
+                        <div className="pt-4 border-t border-slate-100 space-y-4">
+                            <div>
+                                <h3 className="text-sm font-semibold text-slate-800">Managed Policies</h3>
+                                <p className="text-[11px] text-slate-500 font-medium">
+                                    Uncheck coverages that are handled by another broker. The COI generator will leave these blank.
+                                </p>
+                            </div>
+                            <div className="grid grid-cols-2 gap-4">
+                                <Label className="flex items-center gap-2 cursor-pointer text-sm font-medium text-slate-700">
+                                    <input type="checkbox" className="rounded border-slate-300 w-4 h-4 text-blue-600 focus:ring-blue-500" checked={managedAuto} onChange={(e) => setManagedAuto(e.target.checked)} />
+                                    Commercial Auto
+                                </Label>
+                                <Label className="flex items-center gap-2 cursor-pointer text-sm font-medium text-slate-700">
+                                    <input type="checkbox" className="rounded border-slate-300 w-4 h-4 text-blue-600 focus:ring-blue-500" checked={managedGL} onChange={(e) => setManagedGL(e.target.checked)} />
+                                    General Liability
+                                </Label>
+                                <Label className="flex items-center gap-2 cursor-pointer text-sm font-medium text-slate-700">
+                                    <input type="checkbox" className="rounded border-slate-300 w-4 h-4 text-blue-600 focus:ring-blue-500" checked={managedUmb} onChange={(e) => setManagedUmb(e.target.checked)} />
+                                    Umbrella / Excess
+                                </Label>
+                                <Label className="flex items-center gap-2 cursor-pointer text-sm font-medium text-slate-700">
+                                    <input type="checkbox" className="rounded border-slate-300 w-4 h-4 text-blue-600 focus:ring-blue-500" checked={managedWC} onChange={(e) => setManagedWC(e.target.checked)} />
+                                    Workers Comp
+                                </Label>
+                            </div>
                         </div>
                     </div>
 

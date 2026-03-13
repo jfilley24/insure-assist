@@ -65,6 +65,15 @@ export default function ClientDetailPage() {
         }
     };
 
+    // Listen for background jobs completing
+    useEffect(() => {
+        const handleRefresh = () => {
+            fetchClientRefresh();
+        };
+        window.addEventListener("refresh-history", handleRefresh);
+        return () => window.removeEventListener("refresh-history", handleRefresh);
+    }, [clientId, token]);
+
     if (loading) {
         return <div className="p-8 text-slate-500">Loading client data...</div>;
     }
@@ -115,7 +124,7 @@ export default function ClientDetailPage() {
                                     </CardTitle>
                                 </div>
                             </CardHeader>
-                            <CardContent className="pt-4 p-0">
+                            <CardContent className="p-6">
                                 <PolicyManager
                                     policyType="AUTO"
                                     clientId={client.id}
@@ -135,7 +144,7 @@ export default function ClientDetailPage() {
                                     </CardTitle>
                                 </div>
                             </CardHeader>
-                            <CardContent className="pt-4 p-0">
+                            <CardContent className="p-6">
                                 <PolicyManager
                                     policyType="GL"
                                     clientId={client.id}
@@ -155,7 +164,7 @@ export default function ClientDetailPage() {
                                     </CardTitle>
                                 </div>
                             </CardHeader>
-                            <CardContent className="pt-4 p-0">
+                            <CardContent className="p-6">
                                 <PolicyManager
                                     policyType="WC"
                                     clientId={client.id}
@@ -175,7 +184,7 @@ export default function ClientDetailPage() {
                                     </CardTitle>
                                 </div>
                             </CardHeader>
-                            <CardContent className="pt-4 p-0">
+                            <CardContent className="p-6">
                                 <PolicyManager
                                     policyType="UMBRELLA"
                                     clientId={client.id}

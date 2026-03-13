@@ -27,8 +27,17 @@ export async function POST(
         const prisma = getSecurePrisma(decodedToken);
 
         // 1. Verify Client Ownership using secure Prisma extension
-        const client = await prisma.client.findUnique({
-            where: { id: clientId }
+        const client = await (prisma.client.findUnique as any)({
+            where: { id: clientId },
+            select: { 
+                name: true,
+                brokerId: true,
+                managedAuto: true,
+                managedGL: true,
+                managedUmb: true,
+                managedWC: true,
+                broker: true // Fetch all broker fields dynamically
+            }
         });
 
         if (!client) {
@@ -42,25 +51,35 @@ export async function POST(
         const requestorName = dbUser ? `${dbUser.firstName} ${dbUser.lastName || ''}`.trim() : (decodedToken.name || "Unknown Agent");
 
         const body = await request.json();
-        const { gcsUri, source = "PORTAL" } = body;
+        const { gcsUri, source = "PORTAL", isManual, certificateHolderName, descriptionOfOperations } = body;
 
-        if (!gcsUri) {
-            return NextResponse.json({ error: "Missing required gcsUri for request document." }, { status: 400 });
+        let fileBuffer: Buffer | null = null;
+        let bucketName = "";
+
+        if (!isManual) {
+            if (!gcsUri) {
+                return NextResponse.json({ error: "Missing required gcsUri for request document." }, { status: 400 });
+            }
+
+            // 2. Fetch the file from GCS
+            const match = gcsUri.match(/^gs:\/\/([^\/]+)\/(.+)$/);
+            if (!match) {
+                return NextResponse.json({ error: "Malformed GCS URI" }, { status: 400 });
+            }
+            bucketName = match[1];
+            const objectPath = match[2];
+
+            console.log(`Downloading request document from GCS: ${gcsUri}`);
+            const storage = getStorage();
+            const fileRef = storage.bucket(bucketName).file(objectPath);
+            const [downloadedBuffer] = await fileRef.download();
+            fileBuffer = downloadedBuffer;
+        } else {
+            // Need bucketName for uploading the output later
+            // For preview/manual, we may not have a bucket name if the environment isn't strictly set up.
+            const dummyBucket = process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET || ""; 
+            bucketName = dummyBucket;
         }
-
-        // 2. Fetch the file from GCS
-        // Format gs://bucket/path/to/file.pdf -> bucket, path/to/file.pdf
-        const match = gcsUri.match(/^gs:\/\/([^\/]+)\/(.+)$/);
-        if (!match) {
-            return NextResponse.json({ error: "Malformed GCS URI" }, { status: 400 });
-        }
-        const bucketName = match[1];
-        const objectPath = match[2];
-
-        console.log(`Downloading request document from GCS: ${gcsUri}`);
-        const storage = getStorage();
-        const fileRef = storage.bucket(bucketName).file(objectPath);
-        const [fileBuffer] = await fileRef.download();
 
         // 3. Fetch Client Policies
         // Active policies
@@ -87,13 +106,36 @@ export async function POST(
         // 4. Send to FastAPI Microservice
         console.log("4. Dispatching to FastAPI Engine...");
         const formData = new FormData();
-        console.log("Creating Blob...");
-        const blob = new Blob([new Uint8Array(fileBuffer)], { type: 'application/pdf' });
-        formData.append("request_pdf", blob, "request.pdf");
+        
+        if (!isManual && fileBuffer) {
+            console.log("Creating Blob from PDF...");
+            const blob = new Blob([new Uint8Array(fileBuffer)], { type: 'application/pdf' });
+            formData.append("request_pdf", blob, "request.pdf");
+        } else if (isManual) {
+            formData.append("certificate_holder_name", certificateHolderName || "Unknown");
+            formData.append("description_of_operations", descriptionOfOperations || "");
+        }
+        
         formData.append("policies_json", JSON.stringify(policyDataPayload));
+        
+        const clientSettingsPayload = {
+            managedAuto: client.managedAuto,
+            managedGL: client.managedGL,
+            managedUmb: client.managedUmb,
+            managedWC: client.managedWC,
+            clientName: client.name,
+            brokerName: client.broker?.name,
+            brokerAddress: client.broker?.addressLine1,
+            brokerCity: client.broker?.city,
+            brokerState: client.broker?.state,
+            brokerZip: client.broker?.postalCode,
+            brokerPhone: client.broker?.phoneNumber
+        };
+        formData.append("client_settings_json", JSON.stringify(clientSettingsPayload));
 
-        const fastApiUrl = process.env.ACORD_ENGINE_URL || "http://127.0.0.1:8000/generate-coi";
-        console.log("Fetching FASTAPI...");
+        const baseEngineUrl = process.env.ACORD_ENGINE_URL || "http://127.0.0.1:8000";
+        const fastApiUrl = isManual ? `${baseEngineUrl}/generate-coi-manual` : `${baseEngineUrl}/generate-coi`;
+        console.log(`Fetching FASTAPI at ${fastApiUrl}...`);
 
         const fastApiResponse = await fetch(fastApiUrl, {
             method: "POST",
@@ -111,21 +153,34 @@ export async function POST(
         const { demands, status, policy_reviews, pdf_base64 } = responseData;
         console.log("5. Uploading Generated PDF back to GCS...");
 
-        // 5. Upload Generated PDF back to GCS ONLY if the review didn't fail
+        // 5. Upload Generated PDF back to GCS (Even if it failed review)
         let generatedPdfUri = null;
-        if (pdf_base64 && status === "PASSED") {
-            const outputFileName = `generated_coi_${Date.now()}.pdf`;
-            const outputObjectPath = `policies/${decodedToken.brokerId}/${clientId}/coi_outputs/${outputFileName}`;
-            const outputFileRef = storage.bucket(bucketName).file(outputObjectPath);
+        if (pdf_base64 && bucketName && source !== "PORTAL_PREVIEW") {
+            try {
+                const outputFileName = `generated_coi_${Date.now()}.pdf`;
+                const outputObjectPath = `policies/${decodedToken.brokerId}/${clientId}/coi_outputs/${outputFileName}`;
+                const storage = getStorage();
+                const outputFileRef = storage.bucket(bucketName).file(outputObjectPath);
 
-            const fileBytes = Buffer.from(pdf_base64, 'base64');
-            await outputFileRef.save(fileBytes, {
-                contentType: 'application/pdf',
-                metadata: {
-                    cacheControl: 'public, max-age=31536000',
-                }
-            });
-            generatedPdfUri = `gs://${bucketName}/${outputObjectPath}`;
+                const fileBytes = Buffer.from(pdf_base64, 'base64');
+                await outputFileRef.save(fileBytes, {
+                    contentType: 'application/pdf',
+                    metadata: {
+                        cacheControl: 'public, max-age=31536000',
+                    }
+                });
+                generatedPdfUri = `gs://${bucketName}/${outputObjectPath}`;
+            } catch (storageErr) {
+                console.warn("Could not save to GCS (bucket may not exist). Proceeding with base64 only.", storageErr);
+            }
+        }
+
+        if (source === "PORTAL_PREVIEW") {
+            console.log("7. Returning ephemeral PDF base64 for preview");
+            return NextResponse.json({ 
+                status, 
+                pdf_base64 
+            }, { status: 200 });
         }
 
         // 6. Create Database Record
@@ -133,14 +188,26 @@ export async function POST(
         const coiRequest = await (prisma as any).cOIRequest.create({
             data: {
                 clientId,
-                source,
-                requestedBy: requestorName,
+                brokerId: client.brokerId,
+                source: source,
+                requestedBy: isManual ? certificateHolderName : requestorName,
                 requestorId: decodedToken.uid,
-                requestDocumentUri: gcsUri,
+                requestDocumentUri: isManual ? null : gcsUri,
                 demandsJson: JSON.stringify(demands),
                 status,
                 reviewReport: JSON.stringify(policy_reviews),
                 generatedPdfUri
+            }
+        });
+
+        await (prisma as any).auditLog.create({
+            data: {
+                userId: decodedToken.uid,
+                action: "COI_GENERATED",
+                entityType: "COI_REQUEST",
+                entityId: coiRequest.id,
+                brokerId: decodedToken.brokerId,
+                details: JSON.stringify({ status })
             }
         });
 

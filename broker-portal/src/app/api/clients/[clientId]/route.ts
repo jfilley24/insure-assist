@@ -87,7 +87,20 @@ export async function PUT(
         const clientId = resolvedParams.clientId;
 
         const body = await request.json();
-        const { name, authorizedDomains, primaryEmail } = body;
+        const { 
+            name, 
+            authorizedDomains, 
+            primaryEmail, 
+            addressLine1, 
+            addressLine2, 
+            city, 
+            state, 
+            postalCode,
+            managedAuto,
+            managedGL,
+            managedUmb,
+            managedWC
+        } = body;
 
         if (!name) {
             return NextResponse.json({ error: "Missing required field: name" }, { status: 400 });
@@ -142,6 +155,15 @@ export async function PUT(
                 name,
                 authorizedDomains: validatedDomains.join(','),
                 primaryEmail,
+                addressLine1,
+                addressLine2,
+                city,
+                state,
+                postalCode,
+                ...(managedAuto !== undefined && { managedAuto }),
+                ...(managedGL !== undefined && { managedGL }),
+                ...(managedUmb !== undefined && { managedUmb }),
+                ...(managedWC !== undefined && { managedWC }),
                 updatedById: decodedToken.uid
             }
         });

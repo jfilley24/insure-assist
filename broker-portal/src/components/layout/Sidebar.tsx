@@ -22,6 +22,7 @@ const navItems = [
     { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
     { name: "Clients", href: "/dashboard/clients", icon: Users },
     { name: "Team", href: "/dashboard/team", icon: UserPlusIcon },
+    { name: "Settings", href: "/dashboard/settings", icon: Settings },
 ];
 
 export function Sidebar() {

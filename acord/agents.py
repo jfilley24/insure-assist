@@ -10,7 +10,8 @@ from schemas import (
     UmbrellaPolicyDetails, 
     WCPolicyDetails,
     CompleterOutput,
-    ReviewerOutput
+    ReviewerOutput,
+    ClientSettings
 )
 
 load_dotenv()
@@ -56,7 +57,10 @@ def run_policy_reader_wc(document) -> WCPolicyDetails:
     prompt = read_prompt('policy_wc.txt')
     return call_gemini_agent(prompt, [document], WCPolicyDetails)
 
-def run_completer(demands: RequestDemands, auto: AutoPolicyDetails, gl: GLPolicyDetails, umb: UmbrellaPolicyDetails, wc: WCPolicyDetails) -> dict:
+def run_completer(demands: RequestDemands, auto: AutoPolicyDetails, gl: GLPolicyDetails, umb: UmbrellaPolicyDetails, wc: WCPolicyDetails, client_settings: ClientSettings) -> dict:
+    from datetime import datetime
+    current_date = datetime.now().strftime("%m/%d/%Y")
+    
     prompt = read_prompt('completer.txt')
     
     pdf_fields_list = ""
@@ -66,6 +70,9 @@ def run_completer(demands: RequestDemands, auto: AutoPolicyDetails, gl: GLPolicy
             pdf_fields_list = f.read()
             
     content = f"""
+    --- CURRENT DATE TO USE ---
+    Today's Date: {current_date}
+
     --- EXACT ACORD 25 PDF FORM FIELDS AVAILBLE ---
     Please ONLY map your `acord_field_name` responses to the exact strings from this list:
     {pdf_fields_list}
@@ -73,6 +80,11 @@ def run_completer(demands: RequestDemands, auto: AutoPolicyDetails, gl: GLPolicy
     --- REQUESTED DEMANDS ---
     {demands.model_dump_json(indent=2)}
     
+    --- CLIENT SETTINGS ---
+    These settings indicate which policies the broker manages. 
+    If a policy is NOT managed (e.g. managedWC is false), do NOT attempt to fill its sections.
+    {client_settings.model_dump_json(indent=2)}
+
     --- AUTO POLICY ---
     {auto.model_dump_json(indent=2)}
     
@@ -85,7 +97,7 @@ def run_completer(demands: RequestDemands, auto: AutoPolicyDetails, gl: GLPolicy
     --- WORKERS COMP POLICY ---
     {wc.model_dump_json(indent=2)}
     """
-    output: CompleterOutput = call_gemini_agent(prompt, content, CompleterOutput)
+    output: CompleterOutput = call_gemini_agent(prompt, [content], CompleterOutput)
     
     # Convert list of FieldMappings back to a dictionary for pypdf
     result_dict = {}
@@ -94,7 +106,7 @@ def run_completer(demands: RequestDemands, auto: AutoPolicyDetails, gl: GLPolicy
         
     return result_dict
 
-def run_reviewer(demands: RequestDemands, auto: AutoPolicyDetails, gl: GLPolicyDetails, umb: UmbrellaPolicyDetails, wc: WCPolicyDetails, acord_fields: dict) -> ReviewerOutput:
+def run_reviewer(demands: RequestDemands, auto: AutoPolicyDetails, gl: GLPolicyDetails, umb: UmbrellaPolicyDetails, wc: WCPolicyDetails, acord_fields: dict, client_settings: ClientSettings) -> ReviewerOutput:
     from datetime import datetime
     current_date = datetime.now().strftime("%Y-%m-%d")
 
@@ -106,6 +118,11 @@ def run_reviewer(demands: RequestDemands, auto: AutoPolicyDetails, gl: GLPolicyD
     --- REQUESTED DEMANDS ---
     {demands.model_dump_json(indent=2)}
     
+    --- CLIENT SETTINGS ---
+    These settings indicate which policies the broker manages. 
+    If a policy is NOT managed (e.g. managedWC is false), ignore all missing coverages or gaps for that policy type.
+    {client_settings.model_dump_json(indent=2)}
+
     --- ACTUAL COVERAGES (AUTO, GL, UMB, WC) ---
     {auto.model_dump_json(indent=2)}
     {gl.model_dump_json(indent=2)}
