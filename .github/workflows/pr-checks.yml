@@ -1,0 +1,62 @@
+name: PR Checks
+
+on:
+  pull_request:
+    branches: [ "development", "production" ]
+
+jobs:
+  regression-tests:
+    name: PDF Regression Tests
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: prisma
+          POSTGRES_PASSWORD: prisma_password
+          POSTGRES_DB: insure_assist_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          
+      - name: Install Python Dependencies
+        working-directory: ./acord
+        run: |
+          python -m pip install --upgrade pip
+          pip install pypdf
+
+      - name: Install Node Dependencies
+        working-directory: ./broker-portal
+        run: npm install
+
+      - name: Setup Test Database
+        working-directory: ./broker-portal
+        env:
+          DATABASE_URL: postgresql://prisma:prisma_password@localhost:5432/insure_assist_test
+        run: npx prisma db push
+
+      - name: Run PDF Regression Tests
+        working-directory: ./broker-portal
+        env:
+          DATABASE_URL: postgresql://prisma:prisma_password@localhost:5432/insure_assist_test
+          PYTHON_BIN: python
+        run: npx tsx scripts/test-pdf-regression.ts
