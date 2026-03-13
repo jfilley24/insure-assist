@@ -64,42 +64,56 @@ If a developer merges code into `development` and edited files inside `broker-po
 
 ## 4. Your Daily Commands Cheat Sheet
 
-You can type these commands into your terminal, or you can just ask me (your AI agent) things like: *"Save my work for the day"* or *"Deploy my branch to dev"*.
+You can type these bash commands into your terminal yourself, OR you can just copy-paste the bolded sentences and tell me (your AI agent) to do it for you!
 
 ### Goal 1: Save basic edits locally (Mid-day)
 *When you just want to take a snapshot of your work on your personal branch without sending it anywhere.*
+
+**🗣️ What to say to me:** *"Please save my basic edits locally. Here is a summary of what I did: [brief description]"*
+
+**💻 What it actually does:**
 ```bash
 git add .
-git commit -m "wip: working on the new UI"
+git commit -m "wip: [brief description]"
 ```
 
 ### Goal 2: Check in code to your branch (End of day)
 *When you are logging off and want your work safely backed up to the cloud (GitHub).*
+
+**🗣️ What to say to me:** *"Please check in my code to my branch for the day. Here is what I finished: [brief description]"*
+
+**💻 What it actually does:**
 ```bash
 git add .
-git commit -m "feat: finished building the login page"
+git commit -m "feat: [brief description]"
 git push origin <your-branch-name>
 ```
 
 ### Goal 3: Deploy to Development (Staging)
 *When your feature is totally done and you want to test it on the live cloud server.*
-```bash
-# 1. Push your final code to your branch
-git push origin <your-branch-name>
 
-# 2. Go to GitHub.com and click "New Pull Request" -> into 'development'.
-# 3. Wait for the automated tests to pass (Green Checkmark).
-# 4. Click the "Merge" button.
-# 5. Done! The Cloud Run deployment starts automatically.
+**🗣️ What to say to me:** *"Please commit my final code and deploy my branch to dev."*
+
+**💻 What it actually does:**
+```bash
+# 1. git add / git commit / git push your final code to your branch.
+# 2. Open a Pull Request on GitHub aiming at 'development'.
+# 3. Wait for the PR Checks (tests) to pass.
+# 4. Merge the Pull Request.
+# 5. The Cloud Run deployment starts automatically.
 ```
 
 ### Goal 4: Deploy to Production (Live Customers)
 *When the team agrees the code in Development is perfect and ready for the world.*
+
+**🗣️ What to say to me:** *"Please deploy the development branch to production."*
+
+**💻 What it actually does:**
 ```bash
-# 1. Go to GitHub.com.
-# 2. Open a Pull Request from 'development' into 'production'.
-# 3. Click the "Merge" button.
-# 4. Done! The Cloud Run production deployment starts automatically.
+# 1. Open a Pull Request targeting 'production' from 'development'.
+# 2. Wait for the tests to pass.
+# 3. Merge the Pull Request.
+# 4. The Cloud Run production deployment starts automatically.
 ```
 
 ## 5. Summary Checklist for a Code Change
